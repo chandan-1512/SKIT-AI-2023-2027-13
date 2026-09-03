@@ -1,0 +1,137 @@
+/* ===================================================
+   DESIGN SYSTEM — CSS CUSTOM PROPERTIES
+   To retheme: change only the values below.
+   Tailwind utilities map to these via tailwind.config.js
+   =================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Accent Color Theme ──────────────────────────── */
+:root {
+  /* Primary accent — change this one value to retheme the entire app */
+  --color-accent:        #6366f1;   /* indigo-500 */
+  --color-accent-hover:  #4f46e5;   /* indigo-600 */
+  --color-accent-muted:  rgba(99, 102, 241, 0.15);
+
+  /* Surfaces */
+  --color-bg:             #0b0d17;
+  --color-surface:        #111827;   /* gray-900 */
+  --color-surface-elevated: #1f2937; /* gray-800 */
+
+  /* Borders */
+  --color-border:         rgba(255, 255, 255, 0.08);
+
+  /* Typography */
+  --color-text-primary:   #f9fafb;   /* gray-50  */
+  --color-text-secondary: #d1d5db;   /* gray-300 */
+  --color-text-muted:     #6b7280;   /* gray-500 */
+
+  /* Risk badge palette */
+  --color-risk-low:       #22c55e;   /* green-500  */
+  --color-risk-low-bg:    rgba(34, 197, 94, 0.12);
+  --color-risk-medium:    #f59e0b;   /* amber-500  */
+  --color-risk-medium-bg: rgba(245, 158, 11, 0.12);
+  --color-risk-high:      #ef4444;   /* red-500    */
+  --color-risk-high-bg:   rgba(239, 68, 68, 0.12);
+}
+
+/* ─── Base Reset & Global Styles ─────────────────── */
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+  }
+
+  /* Subtle animated gradient background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99, 102, 241, 0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 90% 100%, rgba(99, 102, 241, 0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  a {
+    color: var(--color-accent);
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  a:hover {
+    color: var(--color-accent-hover);
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-surface);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-muted);
+  }
+}
+
+/* ─── Component Layer ────────────────────────────── */
+@layer components {
+  /* Glass card base */
+  .glass {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+  }
+
+  /* Focus ring */
+  .focus-ring {
+    @apply outline-none ring-2 ring-offset-2 ring-offset-[var(--color-bg)];
+    ring-color: var(--color-accent);
+  }
+}
+
+/* ─── Utility Layer ──────────────────────────────── */
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(135deg, var(--color-text-primary) 0%, var(--color-accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.25s ease-out both;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out both;
+  }
+}
