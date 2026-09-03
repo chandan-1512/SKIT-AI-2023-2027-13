@@ -9,14 +9,34 @@ contract LoanDecisionRegistry {
         uint256 timestamp;
         bool exists;
     }
+    enum LoanStatus {
+        Pending,
+        Approved,
+        Rejected
+    }
+
+    struct LoanApplication {
+        uint256 applicationId;
+        address applicant;
+        uint256 loanAmount;
+        LoanStatus status;
+        uint256 appliedAt;
+        bool exists;
+    }
+
+    uint256 private applicationCounter;
 
     mapping(uint256 => LoanDecision) private loanDecisions;
+    mapping(uint256 => LoanApplication) private loanApplications;
+
+
 
     event LoanDecisionRecorded(
         uint256 indexed loanId,
         string decision,
         uint256 timestamp
     );
+    
 
     function recordLoanDecision(
         uint256 _loanId,
