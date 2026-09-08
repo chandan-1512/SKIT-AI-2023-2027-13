@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
 
 from xgboost import XGBClassifier
 
@@ -105,6 +106,17 @@ for name, model in models.items():
     print("\n" + "=" * 50)
     print(f"Training {name}")
     print("=" * 50)
+    # 5-Fold Cross Validation
+    cv_scores = cross_val_score(
+    model,
+    X_train_processed,
+    y_train,
+    cv=5,
+    scoring="f1"
+)
+
+    print(f"5-Fold CV Scores: {cv_scores}")
+    print(f"Average CV F1 Score: {cv_scores.mean():.4f}")
 
 
     # Train the model using the processed training data
@@ -113,12 +125,32 @@ for name, model in models.items():
         y_train
     )
 
+# Check for Overfitting
 
-    # Make predictions on the test data
+# Training prediction
+    y_train_pred = model.predict(
+    X_train_processed
+    )
+     # Make predictions on the test data
     y_pred = model.predict(
         X_test_processed
     )
 
+# Training F1 Score
+    train_f1 = f1_score(
+    y_train,
+    y_train_pred
+    )
+
+# Testing F1 Score
+    test_f1 = f1_score(
+    y_test,
+    y_pred
+    )
+   
+    print(f"Train F1 Score: {train_f1:.4f}")
+    print(f"Test F1 Score:  {test_f1:.4f}")
+    print(f"Difference:     {train_f1 - test_f1:.4f}")
 
     # Calculate the evaluation metrics
     accuracy = accuracy_score(

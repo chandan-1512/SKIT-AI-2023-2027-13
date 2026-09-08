@@ -11,7 +11,7 @@ from preprocessing import (
     y_train,
     y_test
 )
-
+from sklearn.model_selection import GridSearchCV
 from xgboost import XGBClassifier
 
 from sklearn.metrics import (
@@ -25,12 +25,12 @@ from sklearn.metrics import (
 
 
 # Create model
+# Create model
 model = XGBClassifier(
     n_estimators=100,
     random_state=42,
     eval_metric="logloss"
 )
-
 
 # Train model
 model.fit(X_train_processed, y_train)
