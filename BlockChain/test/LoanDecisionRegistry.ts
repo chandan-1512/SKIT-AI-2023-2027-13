@@ -13,4 +13,166 @@ describe("LoanDecisionRegistry", function () {
 
     expect(await loanDecisionRegistry.getAddress()).to.be.properAddress;
   });
+
+  it("should register a loan application", async function () {
+    const { ethers } = await network.connect();
+
+    const LoanDecisionRegistry = await ethers.getContractFactory(
+      "LoanDecisionRegistry"
+    );
+
+    const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+    const [applicant] = await ethers.getSigners();
+    const loanAmount = 50000;
+
+    const tx = await loanDecisionRegistry.registerLoanApplication(
+      loanAmount
+    );
+
+    await tx.wait();
+
+    const application = await loanDecisionRegistry.getLoanApplication(1);
+
+    expect(application[0]).to.equal(1);
+    expect(application[1]).to.equal(applicant.address);
+    expect(application[2]).to.equal(loanAmount);
+    expect(application[3]).to.equal(0);
+    expect(application[4]).to.be.greaterThan(0);
+  });
+  it("should reject a loan application with zero amount", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await expect(
+    loanDecisionRegistry.registerLoanApplication(0)
+  ).to.be.revertedWith("Invalid loan amount");
+});
+it("should emit LoanApplicationSubmitted event", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  const [applicant] = await ethers.getSigners();
+  const loanAmount = 50000;
+
+  await expect(
+    loanDecisionRegistry.registerLoanApplication(loanAmount)
+  )
+    .to.emit(loanDecisionRegistry, "LoanApplicationSubmitted")
+    .withArgs(
+      1,
+      applicant.address,
+      loanAmount,
+      (value: bigint) => value > 0
+    );
+});
+it("should assign unique IDs to multiple loan applications", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(50000);
+  await loanDecisionRegistry.registerLoanApplication(75000);
+
+  expect(
+    await loanDecisionRegistry.getApplicationCounter()
+  ).to.equal(2);
+
+  const firstApplication =
+    await loanDecisionRegistry.getLoanApplication(1);
+
+  const secondApplication =
+    await loanDecisionRegistry.getLoanApplication(2);
+
+  expect(firstApplication[0]).to.equal(1);
+  expect(firstApplication[2]).to.equal(50000);
+
+  expect(secondApplication[0]).to.equal(2);
+  expect(secondApplication[2]).to.equal(75000);
+});
+it("should reject retrieval of a non-existent loan application", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await expect(
+    loanDecisionRegistry.getLoanApplication(999)
+  ).to.be.revertedWith("Loan application not found");
+});
+it("should return applications for an applicant", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  const [applicant] = await ethers.getSigners();
+
+  await loanDecisionRegistry.registerLoanApplication(50000);
+  await loanDecisionRegistry.registerLoanApplication(75000);
+
+  const applicationIds =
+    await loanDecisionRegistry.getApplicantApplications(
+      applicant.address
+    );
+
+  expect(applicationIds.length).to.equal(2);
+  expect(applicationIds[0]).to.equal(1);
+  expect(applicationIds[1]).to.equal(2);
+});
+it("should keep applications separate for different applicants", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  const [applicant1, applicant2] = await ethers.getSigners();
+
+  await loanDecisionRegistry
+    .connect(applicant1)
+    .registerLoanApplication(50000);
+
+  await loanDecisionRegistry
+    .connect(applicant2)
+    .registerLoanApplication(75000);
+
+  const applicant1Applications =
+    await loanDecisionRegistry.getApplicantApplications(
+      applicant1.address
+    );
+
+  const applicant2Applications =
+    await loanDecisionRegistry.getApplicantApplications(
+      applicant2.address
+    );
+
+  expect(applicant1Applications.length).to.equal(1);
+  expect(applicant1Applications[0]).to.equal(1);
+
+  expect(applicant2Applications.length).to.equal(1);
+  expect(applicant2Applications[0]).to.equal(2);
+});
 });
