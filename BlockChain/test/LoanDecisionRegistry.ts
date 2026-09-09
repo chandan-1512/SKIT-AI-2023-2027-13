@@ -76,4 +76,45 @@ it("should emit LoanApplicationSubmitted event", async function () {
       (value: bigint) => value > 0
     );
 });
+it("should assign unique IDs to multiple loan applications", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(50000);
+  await loanDecisionRegistry.registerLoanApplication(75000);
+
+  expect(
+    await loanDecisionRegistry.getApplicationCounter()
+  ).to.equal(2);
+
+  const firstApplication =
+    await loanDecisionRegistry.getLoanApplication(1);
+
+  const secondApplication =
+    await loanDecisionRegistry.getLoanApplication(2);
+
+  expect(firstApplication[0]).to.equal(1);
+  expect(firstApplication[2]).to.equal(50000);
+
+  expect(secondApplication[0]).to.equal(2);
+  expect(secondApplication[2]).to.equal(75000);
+});
+it("should reject retrieval of a non-existent loan application", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await expect(
+    loanDecisionRegistry.getLoanApplication(999)
+  ).to.be.revertedWith("Loan application not found");
+});
 });
