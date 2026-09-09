@@ -17,7 +17,7 @@ export default function AppLayout() {
 
       {/* Minimal footer */}
       <footer className="border-t border-[var(--color-border)] py-4 text-center text-sm text-[var(--color-text-muted)]">
-        SKIT AI Lending Protocol — Sprint 1 Scaffold
+        SKIT AI Lending Protocol — Sprint 2 · Auth &amp; Loan Module
       </footer>
     </div>
   );

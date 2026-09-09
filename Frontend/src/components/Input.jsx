@@ -3,14 +3,16 @@ import { useId } from 'react';
 /**
  * Input — styled text input with optional label and error state.
  *
- * @param {string}   label       - visible label text
+ * @param {string}   label        - visible label text
  * @param {string}   placeholder
  * @param {string}   value
- * @param {Function} onChange    - (e) => void
- * @param {string}   error       - error message; if truthy, shows red border + message
+ * @param {Function} onChange     - (e) => void
+ * @param {string}   error        - error message; if truthy, shows red border + message
  * @param {'text'|'number'|'email'|'password'|'url'} type
- * @param {string}   id          - DOM id (auto-generated via useId if omitted)
- * @param {string}   hint        - helper text below input (shown when no error)
+ * @param {string}   id           - DOM id (auto-generated via useId if omitted)
+ * @param {string}   name         - HTML name attribute (used by e.target.name in forms)
+ * @param {string}   autoComplete - HTML autocomplete attribute
+ * @param {string}   hint         - helper text below input (shown when no error)
  * @param {boolean}  disabled
  * @param {string}   className
  * @param {React.ReactNode} prefix  - icon/text to show inside input on left
@@ -24,6 +26,8 @@ export default function Input({
   error,
   type = 'text',
   id: externalId,
+  name,
+  autoComplete,
   hint,
   disabled = false,
   className = '',
@@ -57,6 +61,8 @@ export default function Input({
         <input
           id={inputId}
           type={type}
+          name={name}
+          autoComplete={autoComplete}
           value={value}
           onChange={onChange}
           placeholder={placeholder}
