@@ -1,5 +1,6 @@
 import sys
 import os
+import joblib
 
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -11,7 +12,7 @@ from preprocessing import (
     y_train,
     y_test
 )
-from sklearn.model_selection import GridSearchCV
+
 from xgboost import XGBClassifier
 
 from sklearn.metrics import (
@@ -24,16 +25,27 @@ from sklearn.metrics import (
 )
 
 
-# Create model
-# Create model
+# Create final XGBoost model
 model = XGBClassifier(
     n_estimators=100,
     random_state=42,
     eval_metric="logloss"
 )
 
+
 # Train model
 model.fit(X_train_processed, y_train)
+
+
+# Save trained model
+model_path = os.path.join(
+    os.path.dirname(__file__),
+    "xgboost_model.pkl"
+)
+
+joblib.dump(model, model_path)
+
+print(f"\nModel saved at: {model_path}")
 
 
 # Predictions
@@ -47,7 +59,7 @@ recall = recall_score(y_test, y_pred)
 f1 = f1_score(y_test, y_pred)
 
 
-print("XGBoost Results")
+print("\nXGBoost Results")
 print("-" * 35)
 
 print(f"Accuracy:  {accuracy:.4f}")
