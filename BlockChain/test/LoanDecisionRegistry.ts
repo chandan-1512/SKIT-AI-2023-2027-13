@@ -117,4 +117,62 @@ it("should reject retrieval of a non-existent loan application", async function 
     loanDecisionRegistry.getLoanApplication(999)
   ).to.be.revertedWith("Loan application not found");
 });
+it("should return applications for an applicant", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  const [applicant] = await ethers.getSigners();
+
+  await loanDecisionRegistry.registerLoanApplication(50000);
+  await loanDecisionRegistry.registerLoanApplication(75000);
+
+  const applicationIds =
+    await loanDecisionRegistry.getApplicantApplications(
+      applicant.address
+    );
+
+  expect(applicationIds.length).to.equal(2);
+  expect(applicationIds[0]).to.equal(1);
+  expect(applicationIds[1]).to.equal(2);
+});
+it("should keep applications separate for different applicants", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  const [applicant1, applicant2] = await ethers.getSigners();
+
+  await loanDecisionRegistry
+    .connect(applicant1)
+    .registerLoanApplication(50000);
+
+  await loanDecisionRegistry
+    .connect(applicant2)
+    .registerLoanApplication(75000);
+
+  const applicant1Applications =
+    await loanDecisionRegistry.getApplicantApplications(
+      applicant1.address
+    );
+
+  const applicant2Applications =
+    await loanDecisionRegistry.getApplicantApplications(
+      applicant2.address
+    );
+
+  expect(applicant1Applications.length).to.equal(1);
+  expect(applicant1Applications[0]).to.equal(1);
+
+  expect(applicant2Applications.length).to.equal(1);
+  expect(applicant2Applications[0]).to.equal(2);
+});
 });

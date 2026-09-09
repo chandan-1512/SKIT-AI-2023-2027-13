@@ -28,6 +28,7 @@ contract LoanDecisionRegistry {
 
     mapping(uint256 => LoanDecision) private loanDecisions;
     mapping(uint256 => LoanApplication) private loanApplications;
+    mapping(address => uint256[]) private applicantApplications;
 
     event LoanDecisionRecorded(
         uint256 indexed loanId,
@@ -56,6 +57,8 @@ contract LoanDecisionRegistry {
             appliedAt: block.timestamp,
             exists: true
         });
+        applicantApplications[msg.sender].push(applicationCounter);
+
         emit LoanApplicationSubmitted(
             applicationCounter,
             msg.sender,
@@ -64,8 +67,13 @@ contract LoanDecisionRegistry {
         );
         return applicationCounter;
     }
+
     function getApplicationCounter() public view returns (uint256) {
     return applicationCounter;
+    }
+    function getApplicantApplications( address _applicant
+    ) public view returns (uint256[] memory) {
+        return applicantApplications[_applicant];
     }
 
     function getLoanApplication(
@@ -95,7 +103,7 @@ contract LoanDecisionRegistry {
             application.appliedAt
         );
     }
-    
+
     function recordLoanDecision(
         uint256 _loanId,
         string memory _decision
