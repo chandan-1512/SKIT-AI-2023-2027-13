@@ -1,7 +1,7 @@
 # SKIT AI Lending Protocol — Frontend
 
-> Sprint 1 scaffold: Vite + React + Tailwind CSS + React Router.  
-> No blockchain integration yet — ethers.js / MetaMask lands in Sprint 2.
+> **Sprint 2** — Auth Layer + Loan Application Module + Vitest test suite.  
+> Login, Registration, oracle credit-score simulation, and loan terms display are all functional.
 
 ---
 
@@ -38,14 +38,32 @@ Frontend/
 │   │   ├── StepIndicator.jsx# Horizontal multi-step progress bar
 │   │   ├── LoadingSpinner.jsx# Animated SVG spinner (sm/md/lg)
 │   │   ├── Badge.jsx        # Risk tier badge: low | medium | high
-│   │   └── Navbar.jsx       # App navigation + placeholder wallet button
+│   │   ├── Navbar.jsx       # Auth-aware nav: user+logout or login/register links
+│   │   ├── auth/            # Sprint 2 auth components
+│   │   │   ├── LoginForm.jsx
+│   │   │   ├── RegisterForm.jsx
+│   │   │   └── ProtectedRoute.jsx
+│   │   └── loan/            # Sprint 2 loan module components
+│   │       ├── LoanRequestForm.jsx
+│   │       └── LoanTermsDisplay.jsx
+│   ├── config/
+│   │   └── loanConfig.js    # Loan bounds, oracle steps, tier→terms mapping
+│   ├── context/
+│   │   └── AuthContext.jsx  # AuthProvider + useAuth hook (sessionStorage)
 │   ├── layouts/
-│   │   └── AppLayout.jsx    # Shared shell: Navbar + max-width container
+│   │   ├── AppLayout.jsx    # Protected shell: Navbar + max-width container
+│   │   └── AuthLayout.jsx   # Public shell for login / register pages
 │   ├── pages/
-│   │   ├── LoanRequestPage.jsx    # Route: /
-│   │   ├── UserDashboardPage.jsx  # Route: /dashboard
-│   │   └── AdminDashboardPage.jsx # Route: /admin
-│   ├── App.jsx              # Route definitions (React Router v6)
+│   │   ├── LoanRequestPage.jsx    # Route: / (protected)
+│   │   ├── UserDashboardPage.jsx  # Route: /dashboard (protected)
+│   │   ├── AdminDashboardPage.jsx # Route: /admin (protected)
+│   │   ├── LoginPage.jsx          # Route: /login (public)
+│   │   └── RegisterPage.jsx       # Route: /register (public)
+│   ├── services/
+│   │   └── mockAuthService.js     # Fake login/register (600 ms delay)
+│   ├── test/
+│   │   └── setup.js               # jest-dom import for Vitest
+│   ├── App.jsx              # Route definitions (React Router v7)
 │   ├── main.jsx             # Entry point — mounts App inside BrowserRouter
 │   └── index.css            # Global styles + CSS design token system
 ├── .env.example             # Environment variable documentation
@@ -53,7 +71,7 @@ Frontend/
 ├── .prettierrc              # Prettier formatting rules
 ├── tailwind.config.js       # Tailwind v3 config (CSS-variable accent theme)
 ├── postcss.config.js        # PostCSS (Tailwind + Autoprefixer)
-├── vite.config.js           # Vite configuration
+├── vite.config.js           # Vite + Vitest configuration
 └── README.md                # This file
 ```
 
@@ -115,22 +133,26 @@ import { Button, Card, Input, StepIndicator, LoadingSpinner, Badge } from '../co
 
 ## Routes
 
-| Path         | Page                  | Status      |
-|--------------|-----------------------|-------------|
-| `/`          | Loan Request          | Placeholder |
-| `/dashboard` | User Dashboard        | Placeholder |
-| `/admin`     | Admin Dashboard       | Placeholder |
+| Path         | Page                  | Auth        | Status      |
+|--------------|-----------------------|-------------|-------------|
+| `/login`     | Login                 | Public      | ✅ Sprint 2  |
+| `/register`  | Register              | Public      | ✅ Sprint 2  |
+| `/`          | Loan Request          | Protected   | ✅ Sprint 2  |
+| `/dashboard` | User Dashboard        | Protected   | Placeholder |
+| `/admin`     | Admin Dashboard       | Protected   | Placeholder |
 
 ---
 
 ## Available Scripts
 
-| Script            | Description                         |
-|-------------------|-------------------------------------|
-| `npm run dev`     | Start Vite dev server (HMR)         |
-| `npm run build`   | Build production bundle to `dist/`  |
-| `npm run preview` | Preview production build locally    |
-| `npm run lint`    | Run ESLint across `src/`            |
+| Script             | Description                            |
+|--------------------|----------------------------------------|
+| `npm run dev`      | Start Vite dev server (HMR)            |
+| `npm run build`    | Build production bundle to `dist/`     |
+| `npm run preview`  | Preview production build locally       |
+| `npm run lint`     | Run oxlint across `src/`               |
+| `npm run test`     | Run Vitest test suite (headless)       |
+| `npm run test:ui`  | Open Vitest browser UI                 |
 
 ---
 
@@ -148,9 +170,24 @@ All vars must be prefixed with `VITE_` to be accessible in-browser via `import.m
 
 ---
 
+## Mock / Sprint 4 Replacements
+
+Every mocked piece is clearly marked with `// TODO (Sprint 4)` in the source.
+
+| Mock piece | File | Sprint 4 replacement |
+|---|---|---|
+| `mockLogin` / `mockRegister` (600 ms fake delay) | `src/services/mockAuthService.js` | Real API call to backend `/auth/login` and `/auth/register` endpoints |
+| Session stored in `sessionStorage` | `src/context/AuthContext.jsx` | JWT from API, stored in `httpOnly` cookie or secure storage |
+| Oracle step simulation (`setTimeout` chain) | `src/components/loan/LoanRequestForm.jsx` → `runMockOracle()` | Chainlink / custom oracle subscription; same `onStepChange` callback signature |
+| Random credit score (300–850) | `src/components/loan/LoanRequestForm.jsx` | Real oracle response value |
+| Loan bounds (`MIN_LOAN_ETH`, `MAX_LOAN_ETH`) | `src/config/loanConfig.js` | On-chain reads via `ethers.js` contract ABI |
+| Collateral ratio & interest rate per tier | `src/config/loanConfig.js` → `tierToTerms()` | Smart contract ABI read |
+| "Deposit collateral & borrow" no-op button | `src/components/loan/LoanTermsDisplay.jsx` → `handleConfirm()` | `depositCollateralAndBorrow(amount, collateral)` contract call via ethers.js |
+
+---
+
 ## Upcoming Sprints
 
-- **Sprint 2**: MetaMask wallet connection (ethers.js v6), `useWallet` hook
 - **Sprint 3**: Contract read — loan state, risk score, health factor
-- **Sprint 4**: Contract write — submit loan request, repay, liquidate
+- **Sprint 4**: Contract write — submit loan request, repay, liquidate; replace all mocks above
 - **Sprint 5**: AI risk tier integration + admin approval flow
