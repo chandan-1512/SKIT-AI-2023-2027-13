@@ -175,4 +175,95 @@ it("should keep applications separate for different applicants", async function 
   expect(applicant2Applications.length).to.equal(1);
   expect(applicant2Applications[0]).to.equal(2);
 });
+it("should update application status to Approved when decision is recorded", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(50000);
+
+  const beforeDecision =
+    await loanDecisionRegistry.getLoanApplication(1);
+
+  expect(beforeDecision[3]).to.equal(0);
+
+  await loanDecisionRegistry.recordLoanDecision(
+    1,
+    "Approved"
+  );
+
+  const application =
+    await loanDecisionRegistry.getLoanApplication(1);
+
+  expect(application[3]).to.equal(1);
+
+  const decision =
+    await loanDecisionRegistry.getLoanDecision(1);
+
+  expect(decision[1]).to.equal("Approved");
+});
+it("should update application status to Rejected when decision is recorded", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(50000);
+
+  await loanDecisionRegistry.recordLoanDecision(
+    1,
+    "Rejected"
+  );
+
+  const application =
+    await loanDecisionRegistry.getLoanApplication(1);
+
+  expect(application[3]).to.equal(2);
+
+  const decision =
+    await loanDecisionRegistry.getLoanDecision(1);
+
+  expect(decision[1]).to.equal("Rejected");
+});
+it("should reject an invalid loan decision", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(50000);
+
+  await expect(
+    loanDecisionRegistry.recordLoanDecision(
+      1,
+      "Pending"
+    )
+  ).to.be.revertedWith("Invalid loan decision");
+});
+it("should reject a decision for a non-existent loan application", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await expect(
+    loanDecisionRegistry.recordLoanDecision(
+      999,
+      "Approved"
+    )
+  ).to.be.revertedWith("Loan application not found");
+});
 });

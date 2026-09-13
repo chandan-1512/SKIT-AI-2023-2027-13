@@ -105,28 +105,44 @@ contract LoanDecisionRegistry {
     }
 
     function recordLoanDecision(
-        uint256 _loanId,
-        string memory _decision
-    ) public {
-        require(_loanId > 0, "Invalid loan ID");
-        require(
-            !loanDecisions[_loanId].exists,
-            "Loan decision already recorded"
-        );
+    uint256 _loanId,
+    string memory _decision
+) public {
+    require(_loanId > 0, "Invalid loan ID");
 
-        loanDecisions[_loanId] = LoanDecision({
-            loanId: _loanId,
-            decision: _decision,
-            timestamp: block.timestamp,
-            exists: true
-        });
+    require(
+        loanApplications[_loanId].exists,
+        "Loan application not found"
+    );
 
-        emit LoanDecisionRecorded(
-            _loanId,
-            _decision,
-            block.timestamp
-        );
+    require(
+        !loanDecisions[_loanId].exists,
+        "Loan decision already recorded"
+    );
+
+    bytes32 decisionHash = keccak256(bytes(_decision));
+
+    if (decisionHash == keccak256(bytes("Approved"))) {
+        loanApplications[_loanId].status = LoanStatus.Approved;
+    } else if (decisionHash == keccak256(bytes("Rejected"))) {
+        loanApplications[_loanId].status = LoanStatus.Rejected;
+    } else {
+        revert("Invalid loan decision");
     }
+
+    loanDecisions[_loanId] = LoanDecision({
+        loanId: _loanId,
+        decision: _decision,
+        timestamp: block.timestamp,
+        exists: true
+    });
+
+    emit LoanDecisionRecorded(
+        _loanId,
+        _decision,
+        block.timestamp
+    );
+}
 
     function getLoanDecision(
         uint256 _loanId
