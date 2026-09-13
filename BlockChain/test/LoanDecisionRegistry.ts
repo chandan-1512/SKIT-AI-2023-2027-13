@@ -266,4 +266,36 @@ it("should reject a decision for a non-existent loan application", async functio
     )
   ).to.be.revertedWith("Loan application not found");
 });
+it("should return Pending status for a newly registered application", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(50000);
+
+  const status =
+    await loanDecisionRegistry.getLoanApplicationStatus(1);
+
+  expect(status).to.equal(0);
+});
+it("should return Pending status for a newly registered application", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(50000);
+
+  const status =
+    await loanDecisionRegistry.getLoanApplicationStatus(1);
+
+  expect(status).to.equal(0);
+});
 });
