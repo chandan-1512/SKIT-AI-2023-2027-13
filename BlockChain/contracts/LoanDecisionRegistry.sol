@@ -42,6 +42,13 @@ contract LoanDecisionRegistry {
         uint256 loanAmount,
         uint256 timestamp
     );
+
+    event LoanApplicationStatusUpdated(
+        uint256 indexed applicationId,
+        LoanStatus status,
+        uint256 timestamp
+    );
+
     function registerLoanApplication(
         uint256 _loanAmount
     ) public returns (uint256) {
@@ -139,6 +146,12 @@ contract LoanDecisionRegistry {
     } else {
         revert("Invalid loan decision");
     }
+
+    emit LoanApplicationStatusUpdated(
+        _loanId,
+        loanApplications[_loanId].status,
+        block.timestamp
+    );
 
     loanDecisions[_loanId] = LoanDecision({
         loanId: _loanId,

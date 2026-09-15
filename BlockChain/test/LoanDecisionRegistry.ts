@@ -298,4 +298,46 @@ it("should return Pending status for a newly registered application", async func
 
   expect(status).to.equal(0);
 });
+it("should emit status update event when a loan decision is recorded", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(50000);
+
+  await expect(
+    loanDecisionRegistry.recordLoanDecision(1, "Approved")
+  )
+    .to.emit(loanDecisionRegistry, "LoanApplicationStatusUpdated")
+    .withArgs(
+      1,
+      1,
+      (value: bigint) => value > 0
+    );
+});
+it("should emit Rejected status update event", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(50000);
+
+  await expect(
+    loanDecisionRegistry.recordLoanDecision(1, "Rejected")
+  )
+    .to.emit(loanDecisionRegistry, "LoanApplicationStatusUpdated")
+    .withArgs(
+      1,
+      2,
+      (value: bigint) => value > 0
+    );
+});
 });
