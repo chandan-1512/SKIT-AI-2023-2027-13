@@ -136,6 +136,10 @@ contract LoanDecisionRegistry {
         !loanDecisions[_loanId].exists,
         "Loan decision already recorded"
     );
+    require(
+        loanApplications[_loanId].status == LoanStatus.Pending,
+        "Loan application is not pending"
+    );
 
     bytes32 decisionHash = keccak256(bytes(_decision));
 

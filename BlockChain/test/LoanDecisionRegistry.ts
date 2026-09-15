@@ -340,4 +340,61 @@ it("should emit Rejected status update event", async function () {
       (value: bigint) => value > 0
     );
 });
+it("should not allow a second decision for the same application", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(50000);
+
+  await loanDecisionRegistry.recordLoanDecision(
+    1,
+    "Approved"
+  );
+
+  await expect(
+    loanDecisionRegistry.recordLoanDecision(
+      1,
+      "Rejected"
+    )
+  ).to.be.revertedWith("Loan decision already recorded");
+});
+it("should keep an approved application in Approved status", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(50000);
+
+  await loanDecisionRegistry.recordLoanDecision(
+    1,
+    "Approved"
+  );
+
+  const status =
+    await loanDecisionRegistry.getLoanApplicationStatus(1);
+
+  expect(status).to.equal(1);
+});
+it("should reject status retrieval for a non-existent application", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await expect(
+    loanDecisionRegistry.getLoanApplicationStatus(999)
+  ).to.be.revertedWith("Loan application not found");
+});
 });
