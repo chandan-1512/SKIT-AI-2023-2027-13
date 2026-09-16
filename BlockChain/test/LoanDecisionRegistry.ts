@@ -397,4 +397,59 @@ it("should reject status retrieval for a non-existent application", async functi
     loanDecisionRegistry.getLoanApplicationStatus(999)
   ).to.be.revertedWith("Loan application not found");
 });
+it("should allow an applicant to retrieve their own application", async function () {
+  const { ethers } = await network.connect();
+
+  const [applicant] = await ethers.getSigners();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(75000);
+
+  const application =
+    await loanDecisionRegistry.getMyLoanApplication(1);
+
+  expect(application[0]).to.equal(1);
+  expect(application[1]).to.equal(applicant.address);
+  expect(application[2]).to.equal(75000);
+  expect(application[3]).to.equal(0);
+});
+it("should reject retrieval by another applicant", async function () {
+  const { ethers } = await network.connect();
+
+  const [applicant, otherUser] = await ethers.getSigners();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry
+    .connect(applicant)
+    .registerLoanApplication(75000);
+
+  await expect(
+    loanDecisionRegistry
+      .connect(otherUser)
+      .getMyLoanApplication(1)
+  ).to.be.revertedWith("Not the application owner");
+});
+it("should reject retrieval of a non-existent application", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await expect(
+    loanDecisionRegistry.getMyLoanApplication(999)
+  ).to.be.revertedWith("Loan application not found");
+});
 });

@@ -120,6 +120,38 @@ contract LoanDecisionRegistry {
             );
             return loanApplications[_applicationId].status;
     }
+    function getMyLoanApplication(uint256
+     _applicationId)
+         public
+         view
+         returns (
+            uint256,
+            address,
+            uint256,
+            LoanStatus,
+            uint256
+        )
+    {
+        require(
+            loanApplications[_applicationId].exists,
+            "Loan application not found"
+        );
+
+        require(
+            loanApplications[_applicationId].applicant == msg.sender,
+            "Not the application owner"
+        );
+
+        LoanApplication memory application = loanApplications[_applicationId];
+        
+        return (
+            application.applicationId,
+            application.applicant,
+            application.loanAmount,
+            application.status,
+            application.appliedAt
+        );
+    }
 
     function recordLoanDecision(
     uint256 _loanId,
