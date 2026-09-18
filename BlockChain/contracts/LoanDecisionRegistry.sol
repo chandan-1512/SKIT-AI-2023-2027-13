@@ -80,6 +80,10 @@ contract LoanDecisionRegistry {
     }
     function getApplicantApplications( address _applicant
     ) public view returns (uint256[] memory) {
+        require(
+            _applicant != address(0),
+            "Invalid applicant address"
+        );
         return applicantApplications[_applicant];
     }
 

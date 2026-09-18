@@ -452,4 +452,19 @@ it("should reject retrieval of a non-existent application", async function () {
     loanDecisionRegistry.getMyLoanApplication(999)
   ).to.be.revertedWith("Loan application not found");
 });
+it("should reject applicant application history lookup for zero address", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await expect(
+    loanDecisionRegistry.getApplicantApplications(
+      ethers.ZeroAddress
+    )
+  ).to.be.revertedWith("Invalid applicant address");
+});
 });
