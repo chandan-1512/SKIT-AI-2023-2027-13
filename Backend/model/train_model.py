@@ -1,10 +1,10 @@
 import sys
 import os
 
-
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )
+
 from preprocessing import (
     X_train_processed,
     X_test_processed,
@@ -13,16 +13,15 @@ from preprocessing import (
 )
 
 from sklearn.linear_model import LogisticRegression
+
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
     recall_score,
     f1_score,
     classification_report,
-    confusion_matrix,
-    ConfusionMatrixDisplay
+    confusion_matrix
 )
-
 
 
 # Create model
@@ -33,18 +32,55 @@ model = LogisticRegression(
 
 
 # Train model
-model.fit(X_train_processed, y_train)
+model.fit(
+    X_train_processed,
+    y_train
+)
 
 
-# Predictions
-y_pred = model.predict(X_test_processed)
+# Training predictions
+y_train_pred = model.predict(
+    X_train_processed
+)
 
 
-# Evaluation
-accuracy = accuracy_score(y_test, y_pred)
-precision = precision_score(y_test, y_pred)
-recall = recall_score(y_test, y_pred)
-f1 = f1_score(y_test, y_pred)
+# Test predictions
+y_pred = model.predict(
+    X_test_processed
+)
+
+
+# Evaluation metrics
+accuracy = accuracy_score(
+    y_test,
+    y_pred
+)
+
+precision = precision_score(
+    y_test,
+    y_pred
+)
+
+recall = recall_score(
+    y_test,
+    y_pred
+)
+
+f1 = f1_score(
+    y_test,
+    y_pred
+)
+
+
+# Training F1 Score
+train_f1 = f1_score(
+    y_train,
+    y_train_pred
+)
+
+
+# Difference between Train and Test F1
+f1_difference = train_f1 - f1
 
 
 print("Logistic Regression Results")
@@ -55,11 +91,26 @@ print(f"Precision: {precision:.4f}")
 print(f"Recall:    {recall:.4f}")
 print(f"F1 Score:  {f1:.4f}")
 
+print(f"Train F1 Score: {train_f1:.4f}")
+print(f"Test F1 Score:  {f1:.4f}")
+print(f"Difference:     {f1_difference:.4f}")
+
+
+# Classification Report
 print("\nClassification Report:")
-print(classification_report(y_test, y_pred))
+print(
+    classification_report(
+        y_test,
+        y_pred
+    )
+)
+
 
 # Confusion Matrix
-cm = confusion_matrix(y_test, y_pred)
+cm = confusion_matrix(
+    y_test,
+    y_pred
+)
 
 print("\nConfusion Matrix:")
 print(cm)
