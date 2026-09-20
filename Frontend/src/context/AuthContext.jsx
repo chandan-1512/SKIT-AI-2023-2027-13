@@ -21,6 +21,7 @@ import { mockLogin, mockRegister } from '../services/mockAuthService';
  * @typedef {{
  *   user: AuthUser | null,
  *   isAuthenticated: boolean,
+ *   isAdmin: boolean,
  *   isLoading: boolean,
  *   login: (email: string, password: string) => Promise<void>,
  *   register: (name: string, email: string, password: string) => Promise<void>,
@@ -85,6 +86,9 @@ export function AuthProvider({ children }) {
   const value = {
     user,
     isAuthenticated: user !== null,
+    // Derived from the isAdmin flag on the user object set by mockAuthService.
+    // TODO (Sprint 4): replace with a role claim from the real JWT payload.
+    isAdmin: user?.isAdmin ?? false,
     login,
     register,
     logout,

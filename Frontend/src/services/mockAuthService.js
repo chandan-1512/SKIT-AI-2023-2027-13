@@ -12,7 +12,7 @@
 
 const MOCK_DELAY_MS = 600;
 
-/** @typedef {{ id: string, name: string, email: string }} AuthUser */
+/** @typedef {{ id: string, name: string, email: string, isAdmin: boolean }} AuthUser */
 
 /**
  * Simulate a login request.
@@ -60,9 +60,13 @@ function delay(ms) {
 
 function buildMockUser(email, name) {
   const displayName = name ?? email.split('@')[0];
+  // Deterministic admin detection: any email beginning with "admin@" is an admin.
+  // TODO (Sprint 4): replace with a role claim from the real JWT / backend response.
+  const isAdmin = email.toLowerCase().startsWith('admin@');
   return {
     id: `mock-uid-${Math.random().toString(36).slice(2, 9)}`,
     name: displayName,
     email,
+    isAdmin,
   };
 }
