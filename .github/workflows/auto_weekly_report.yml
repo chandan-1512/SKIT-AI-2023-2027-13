@@ -11,10 +11,6 @@ on:
 permissions:
   contents: write
 
-concurrency:
-  group: weekly-progress-report
-  cancel-in-progress: false
-
 jobs:
   generate-and-commit:
     runs-on: ubuntu-latest
@@ -53,9 +49,5 @@ jobs:
             echo "No new changes or reports to commit."
           else
             git commit -m "docs: archive Form-3 weekly progress report [skip ci]"
-
-            git fetch origin main
-            git rebase origin/main
-
-            git push origin main
+            git push
           fi
