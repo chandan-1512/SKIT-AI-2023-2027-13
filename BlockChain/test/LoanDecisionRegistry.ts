@@ -603,4 +603,18 @@ it("should reject loan decisions from an unauthorized address", async function (
       .recordLoanDecision(1, "Approved")
   ).to.be.revertedWith("Not authorized to record decision");
 });
+it("should assign the deployer as the decision maker", async function () {
+  const { ethers } = await network.connect();
+
+  const [deployer] = await ethers.getSigners();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  expect(await loanDecisionRegistry.decisionMaker())
+    .to.equal(deployer.address);
+});
 });
