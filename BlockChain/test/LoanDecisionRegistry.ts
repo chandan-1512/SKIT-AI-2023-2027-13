@@ -617,4 +617,31 @@ it("should assign the deployer as the decision maker", async function () {
   expect(await loanDecisionRegistry.decisionMaker())
     .to.equal(deployer.address);
 });
+it("should keep application pending after an unauthorized decision attempt", async function () {
+  const { ethers } = await network.connect();
+
+  const [decisionMaker, unauthorizedUser] =
+    await ethers.getSigners();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry
+    .connect(decisionMaker)
+    .registerLoanApplication(60000);
+
+  await expect(
+    loanDecisionRegistry
+      .connect(unauthorizedUser)
+      .recordLoanDecision(1, "Approved")
+  ).to.be.revertedWith("Not authorized to record decision");
+
+  const status =
+    await loanDecisionRegistry.getLoanApplicationStatus(1);
+
+  expect(status).to.equal(0);
+});
 });
