@@ -644,4 +644,60 @@ it("should keep application pending after an unauthorized decision attempt", asy
 
   expect(status).to.equal(0);
 });
+it("should store the correct decision record after approval", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(100000);
+
+  await loanDecisionRegistry.recordLoanDecision(
+    1,
+    "Approved"
+  );
+
+  const decision =
+    await loanDecisionRegistry.getLoanDecision(1);
+
+  expect(decision[0]).to.equal(1);
+  expect(decision[1]).to.equal("Approved");
+  expect(decision[2]).to.be.greaterThan(0);
+
+  const status =
+    await loanDecisionRegistry.getLoanApplicationStatus(1);
+
+  expect(status).to.equal(1);
+});
+it("should store the correct decision record after rejection", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(75000);
+
+  await loanDecisionRegistry.recordLoanDecision(
+    1,
+    "Rejected"
+  );
+
+  const decision =
+    await loanDecisionRegistry.getLoanDecision(1);
+
+  expect(decision[0]).to.equal(1);
+  expect(decision[1]).to.equal("Rejected");
+  expect(decision[2]).to.be.greaterThan(0);
+
+  const status =
+    await loanDecisionRegistry.getLoanApplicationStatus(1);
+
+  expect(status).to.equal(2);
+});
 });
