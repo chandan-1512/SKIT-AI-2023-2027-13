@@ -560,4 +560,47 @@ it("should preserve applicant application history after decisions", async functi
   expect(applications[1]).to.equal(2);
   
 });
+it("should allow the decision maker to record a loan decision", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(50000);
+
+  await loanDecisionRegistry.recordLoanDecision(
+    1,
+    "Approved"
+  );
+
+  const status =
+    await loanDecisionRegistry.getLoanApplicationStatus(1);
+
+  expect(status).to.equal(1);
+});
+it("should reject loan decisions from an unauthorized address", async function () {
+  const { ethers } = await network.connect();
+
+  const [decisionMaker, unauthorizedUser] =
+    await ethers.getSigners();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry
+    .connect(decisionMaker)
+    .registerLoanApplication(50000);
+
+  await expect(
+    loanDecisionRegistry
+      .connect(unauthorizedUser)
+      .recordLoanDecision(1, "Approved")
+  ).to.be.revertedWith("Not authorized to record decision");
+});
 });

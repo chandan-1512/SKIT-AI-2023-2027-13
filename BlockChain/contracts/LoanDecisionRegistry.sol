@@ -25,6 +25,7 @@ contract LoanDecisionRegistry {
     }
 
     uint256 private applicationCounter;
+    address public decisionMaker;
 
     mapping(uint256 => LoanDecision) private loanDecisions;
     mapping(uint256 => LoanApplication) private loanApplications;
@@ -48,6 +49,9 @@ contract LoanDecisionRegistry {
         LoanStatus status,
         uint256 timestamp
     );
+    constructor() {
+        decisionMaker = msg.sender;
+    }
 
     function registerLoanApplication(
         uint256 _loanAmount
@@ -161,6 +165,10 @@ contract LoanDecisionRegistry {
     uint256 _loanId,
     string memory _decision
 ) public {
+    require(
+        msg.sender == decisionMaker,
+        "Not authorized to record decision"
+    );
     require(_loanId > 0, "Invalid loan ID");
 
     require(
