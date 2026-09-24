@@ -119,6 +119,40 @@ contract LoanDecisionRegistry {
             application.appliedAt
         );
     }
+
+    function getApplicationSummary(
+        uint256 _applicationId
+    )
+        public
+        view
+        returns (
+             uint256 applicationId,
+             address applicant,
+             uint256 loanAmount,
+             LoanStatus status,
+             uint256 appliedAt,
+             bool hasDecision
+        )
+    {
+        require(
+            loanApplications[_applicationId].exists,
+            "Loan application not found"
+        );
+
+        LoanApplication memory application =
+        loanApplications[_applicationId];
+
+        return (
+            application.applicationId,
+            application.applicant,
+            application.loanAmount,
+            application.status,
+            application.appliedAt,
+            loanDecisions[_applicationId].exists
+        );
+    }
+
+
     function getLoanApplicationStatus(
         uint256 _applicationId
     ) public view returns (LoanStatus) {
@@ -128,6 +162,19 @@ contract LoanDecisionRegistry {
             );
             return loanApplications[_applicationId].status;
     }
+
+    function applicationExists(
+        uint256 _applicationId
+    ) public view returns (bool) {
+        return loanApplications[_applicationId].exists;
+    }
+
+    function decisionExists(
+        uint256 _loanId
+    ) public view returns (bool) {
+        return loanDecisions[_loanId].exists;
+    }
+
     function getMyLoanApplication(uint256
      _applicationId)
          public
