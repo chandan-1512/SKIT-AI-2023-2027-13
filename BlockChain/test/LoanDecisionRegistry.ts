@@ -700,4 +700,32 @@ it("should store the correct decision record after rejection", async function ()
 
   expect(status).to.equal(2);
 });
+it("should reject a second decision for an already rejected application", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(50000);
+
+  await loanDecisionRegistry.recordLoanDecision(
+    1,
+    "Rejected"
+  );
+
+  await expect(
+    loanDecisionRegistry.recordLoanDecision(
+      1,
+      "Approved"
+    )
+  ).to.be.revertedWith("Loan decision already recorded");
+
+  const status =
+    await loanDecisionRegistry.getLoanApplicationStatus(1);
+
+  expect(status).to.equal(2);
+});
 });
