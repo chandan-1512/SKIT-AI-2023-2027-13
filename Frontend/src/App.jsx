@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import AdminRoute from './components/auth/AdminRoute';
 import AppLayout from './layouts/AppLayout';
 import AuthLayout from './layouts/AuthLayout';
 
@@ -33,7 +34,11 @@ export default function App() {
         >
           <Route index path="/" element={<LoanRequestPage />} />
           <Route path="/dashboard" element={<UserDashboardPage />} />
-          <Route path="/admin" element={<AdminDashboardPage />} />
+
+          {/* ── Admin-only routes (require isAdmin flag) ── */}
+          <Route element={<AdminRoute />}>
+            <Route path="/admin" element={<AdminDashboardPage />} />
+          </Route>
         </Route>
 
         {/* Catch-all */}
