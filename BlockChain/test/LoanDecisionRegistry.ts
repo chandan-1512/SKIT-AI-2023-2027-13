@@ -560,4 +560,334 @@ it("should preserve applicant application history after decisions", async functi
   expect(applications[1]).to.equal(2);
   
 });
+it("should allow the decision maker to record a loan decision", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(50000);
+
+  await loanDecisionRegistry.recordLoanDecision(
+    1,
+    "Approved"
+  );
+
+  const status =
+    await loanDecisionRegistry.getLoanApplicationStatus(1);
+
+  expect(status).to.equal(1);
+});
+it("should reject loan decisions from an unauthorized address", async function () {
+  const { ethers } = await network.connect();
+
+  const [decisionMaker, unauthorizedUser] =
+    await ethers.getSigners();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry
+    .connect(decisionMaker)
+    .registerLoanApplication(50000);
+
+  await expect(
+    loanDecisionRegistry
+      .connect(unauthorizedUser)
+      .recordLoanDecision(1, "Approved")
+  ).to.be.revertedWith("Not authorized to record decision");
+});
+it("should assign the deployer as the decision maker", async function () {
+  const { ethers } = await network.connect();
+
+  const [deployer] = await ethers.getSigners();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  expect(await loanDecisionRegistry.decisionMaker())
+    .to.equal(deployer.address);
+});
+it("should keep application pending after an unauthorized decision attempt", async function () {
+  const { ethers } = await network.connect();
+
+  const [decisionMaker, unauthorizedUser] =
+    await ethers.getSigners();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry
+    .connect(decisionMaker)
+    .registerLoanApplication(60000);
+
+  await expect(
+    loanDecisionRegistry
+      .connect(unauthorizedUser)
+      .recordLoanDecision(1, "Approved")
+  ).to.be.revertedWith("Not authorized to record decision");
+
+  const status =
+    await loanDecisionRegistry.getLoanApplicationStatus(1);
+
+  expect(status).to.equal(0);
+});
+it("should store the correct decision record after approval", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(100000);
+
+  await loanDecisionRegistry.recordLoanDecision(
+    1,
+    "Approved"
+  );
+
+  const decision =
+    await loanDecisionRegistry.getLoanDecision(1);
+
+  expect(decision[0]).to.equal(1);
+  expect(decision[1]).to.equal("Approved");
+  expect(decision[2]).to.be.greaterThan(0);
+
+  const status =
+    await loanDecisionRegistry.getLoanApplicationStatus(1);
+
+  expect(status).to.equal(1);
+});
+it("should store the correct decision record after rejection", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(75000);
+
+  await loanDecisionRegistry.recordLoanDecision(
+    1,
+    "Rejected"
+  );
+
+  const decision =
+    await loanDecisionRegistry.getLoanDecision(1);
+
+  expect(decision[0]).to.equal(1);
+  expect(decision[1]).to.equal("Rejected");
+  expect(decision[2]).to.be.greaterThan(0);
+
+  const status =
+    await loanDecisionRegistry.getLoanApplicationStatus(1);
+
+  expect(status).to.equal(2);
+});
+it("should reject a second decision for an already rejected application", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(50000);
+
+  await loanDecisionRegistry.recordLoanDecision(
+    1,
+    "Rejected"
+  );
+
+  await expect(
+    loanDecisionRegistry.recordLoanDecision(
+      1,
+      "Approved"
+    )
+  ).to.be.revertedWith("Loan decision already recorded");
+
+  const status =
+    await loanDecisionRegistry.getLoanApplicationStatus(1);
+
+  expect(status).to.equal(2);
+});
+it("should reject a second decision for an already approved application", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(100000);
+
+  await loanDecisionRegistry.recordLoanDecision(
+    1,
+    "Approved"
+  );
+
+  await expect(
+    loanDecisionRegistry.recordLoanDecision(
+      1,
+      "Rejected"
+    )
+  ).to.be.revertedWith("Loan decision already recorded");
+
+  const status =
+    await loanDecisionRegistry.getLoanApplicationStatus(1);
+
+  expect(status).to.equal(1);
+});
+it("should confirm when a loan application exists", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(100000);
+
+  expect(
+    await loanDecisionRegistry.applicationExists(1)
+  ).to.equal(true);
+
+  expect(
+    await loanDecisionRegistry.applicationExists(999)
+  ).to.equal(false);
+});
+
+it("should track whether a loan decision exists", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(100000);
+
+  expect(
+    await loanDecisionRegistry.decisionExists(1)
+  ).to.equal(false);
+
+  await loanDecisionRegistry.recordLoanDecision(
+    1,
+    "Approved"
+  );
+
+  expect(
+    await loanDecisionRegistry.decisionExists(1)
+  ).to.equal(true);
+
+  expect(
+    await loanDecisionRegistry.decisionExists(999)
+  ).to.equal(false);
+});
+it("should return a complete application summary before a decision", async function () {
+  const { ethers } = await network.connect();
+
+  const [applicant] = await ethers.getSigners();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(150000);
+
+  const summary =
+    await loanDecisionRegistry.getApplicationSummary(1);
+
+  expect(summary.applicationId).to.equal(1);
+  expect(summary.applicant).to.equal(applicant.address);
+  expect(summary.loanAmount).to.equal(150000);
+  expect(summary.status).to.equal(0);
+  expect(summary.appliedAt).to.be.greaterThan(0);
+  expect(summary.hasDecision).to.equal(false);
+});
+
+it("should return a complete application summary after approval", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(200000);
+
+  await loanDecisionRegistry.recordLoanDecision(
+    1,
+    "Approved"
+  );
+
+  const summary =
+    await loanDecisionRegistry.getApplicationSummary(1);
+
+  expect(summary.applicationId).to.equal(1);
+  expect(summary.loanAmount).to.equal(200000);
+  expect(summary.status).to.equal(1);
+  expect(summary.hasDecision).to.equal(true);
+});
+
+it("should reject summary retrieval for a non-existent application", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await expect(
+    loanDecisionRegistry.getApplicationSummary(999)
+  ).to.be.revertedWith("Loan application not found");
+});
+it("should return a complete application summary after rejection", async function () {
+  const { ethers } = await network.connect();
+
+  const LoanDecisionRegistry = await ethers.getContractFactory(
+    "LoanDecisionRegistry"
+  );
+
+  const loanDecisionRegistry = await LoanDecisionRegistry.deploy();
+
+  await loanDecisionRegistry.registerLoanApplication(125000);
+
+  await loanDecisionRegistry.recordLoanDecision(
+    1,
+    "Rejected"
+  );
+
+  const summary =
+    await loanDecisionRegistry.getApplicationSummary(1);
+
+  expect(summary.applicationId).to.equal(1);
+  expect(summary.loanAmount).to.equal(125000);
+  expect(summary.status).to.equal(2);
+  expect(summary.hasDecision).to.equal(true);
+});
 });
