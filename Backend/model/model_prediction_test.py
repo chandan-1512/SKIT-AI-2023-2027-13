@@ -1,37 +1,65 @@
-import os
 import sys
-import joblib
+import os
 import pandas as pd
+from xgboost import XGBClassifier
 
-from predict import predict_loan
+sys.path.append(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
+
+from preprocessing import (
+    X_train_processed,
+    X_test_processed,
+    y_train,
+    y_test
+)
 
 
-# Load dataset
-df = pd.read_csv("data/loan_data.csv")
+# Train baseline XGBoost
+model = XGBClassifier(
+    n_estimators=100,
+    random_state=42,
+    eval_metric="logloss"
+)
 
-print("\n===== UNSEEN DATA PREDICTION TEST =====")
+model.fit(
+    X_train_processed,
+    y_train
+)
 
 
-# Select 20 random applicants
-test_data = df.sample(n=20, random_state=42)
+# Select 20 random unseen applicants
+sample = pd.DataFrame(
+    X_test_processed,
+    index=y_test.index
+).sample(
+    n=20,
+    random_state=42
+)
+
+actual_status = y_test.loc[sample.index]
+
+# Predict probability
+probabilities = model.predict_proba(sample)[:, 1]
+
+# 0.50 threshold
+predictions = (probabilities >= 0.50).astype(int)
+
+
+print("\n===== 70K UNSEEN DATA PREDICTION TEST =====")
 
 correct = 0
-total = len(test_data)
+total = len(sample)
 
 
-for i, (_, applicant) in enumerate(test_data.iterrows(), start=1):
-
-    actual_status = int(applicant["loan_status"])
-
-    # Remove target column
-    applicant_data = applicant.drop("loan_status").to_dict()
-
-    # Prediction
-    prediction, probability = predict_loan(applicant_data)
+for i, (prediction, probability, actual) in enumerate(
+    zip(predictions, probabilities, actual_status),
+    start=1
+):
 
     prediction = int(prediction)
+    actual = int(actual)
 
-    # Probabilities
     class_0_probability = 1 - probability
     class_1_probability = probability
 
@@ -39,7 +67,7 @@ for i, (_, applicant) in enumerate(test_data.iterrows(), start=1):
     print(f"Applicant {i}")
     print("========================================")
 
-    print(f"Actual Status:     {actual_status}")
+    print(f"Actual Status:     {actual}")
     print(f"Predicted Status:  {prediction}")
 
     if prediction == 1:
@@ -47,7 +75,7 @@ for i, (_, applicant) in enumerate(test_data.iterrows(), start=1):
     else:
         print("Prediction: Loan Rejected")
 
-    if actual_status == 1:
+    if actual == 1:
         print("Actual:     Loan Approved")
     else:
         print("Actual:     Loan Rejected")
@@ -60,21 +88,21 @@ for i, (_, applicant) in enumerate(test_data.iterrows(), start=1):
     print("\nResult:")
     print("-" * 30)
 
-    if prediction == actual_status:
+    if prediction == actual:
         print("Correct Prediction")
         correct += 1
     else:
         print("Incorrect Prediction")
 
 
-# Final result
 accuracy = (correct / total) * 100
+
 
 print("\n========================================")
 print("FINAL UNSEEN DATA TEST RESULT")
 print("========================================")
 
-print(f"Total Applicants:    {total}")
-print(f"Correct Predictions: {correct}")
+print(f"Total Applicants:      {total}")
+print(f"Correct Predictions:   {correct}")
 print(f"Incorrect Predictions: {total - correct}")
-print(f"Accuracy:             {accuracy:.2f}%")
+print(f"Sample Accuracy:       {accuracy:.2f}%")
