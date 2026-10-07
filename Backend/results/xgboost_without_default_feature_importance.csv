@@ -1,0 +1,22 @@
+feature,importance
+person_home_ownership_OWN,0.112199344
+loan_intent_VENTURE,0.1103712
+loan_intent_EDUCATION,0.095521264
+loan_percent_income,0.08120933
+person_education_Bachelor,0.07449397
+loan_intent_PERSONAL,0.07170198
+person_home_ownership_RENT,0.070329644
+person_education_Master,0.061174583
+person_education_High School,0.051617827
+loan_int_rate,0.05135177
+loan_intent_MEDICAL,0.044251587
+person_education_Doctorate,0.042403746
+loan_intent_HOMEIMPROVEMENT,0.034306433
+person_gender_male,0.0295115
+person_income,0.027719503
+person_age,0.008486469
+person_home_ownership_OTHER,0.008400644
+loan_amnt,0.008020332
+cb_person_cred_hist_length,0.006035663
+person_emp_exp,0.005599955
+credit_score,0.0052933004

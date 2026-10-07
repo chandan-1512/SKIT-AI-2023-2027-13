@@ -1,4 +1,5 @@
 import pandas as pd
+import joblib
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -38,6 +39,14 @@ X_train, X_test, y_train, y_test = train_test_split(
 # Fit scaler only on training data
 X_train_processed = scaler.fit_transform(X_train)
 
+
+# Save fitted scaler for API prediction
+joblib.dump(
+    scaler,
+    "results/scaler.pkl"
+)
+
+
 # Transform test data
 X_test_processed = scaler.transform(X_test)
 
@@ -49,3 +58,5 @@ print("Testing data shape:", X_test.shape)
 
 print("\nProcessed training shape:", X_train_processed.shape)
 print("Processed testing shape:", X_test_processed.shape)
+
+print("\nScaler saved successfully at: results/scaler.pkl")

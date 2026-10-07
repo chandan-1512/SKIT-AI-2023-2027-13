@@ -1,10 +1,22 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 from model.predict import predict_loan
+from app.database import SessionLocal
+from app.models import LoanApplication as LoanApplicationDB
 
 
 app = FastAPI()
+
+
+# Database session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 @app.get("/")
@@ -32,19 +44,42 @@ class LoanApplication(BaseModel):
 
 
 @app.post("/predict")
-def predict(application: LoanApplication):
+def predict(
+    application: LoanApplication,
+    db: Session = Depends(get_db)
+):
 
+    # Convert API input into dictionary
     applicant_data = application.model_dump()
 
-    prediction, probability = predict_loan(applicant_data)
+    # Predict using trained XGBoost model
+    prediction, probability, capability_score = predict_loan(
+        applicant_data
+    )
 
+    # Generate decision
     if prediction == 1:
         decision = "Loan Approved"
     else:
         decision = "Loan Rejected"
 
+    # Create database record
+    db_application = LoanApplicationDB(
+        **applicant_data,
+        prediction=int(prediction),
+        decision=decision,
+        probability=float(probability)
+    )
+
+    # Save prediction result to PostgreSQL
+    db.add(db_application)
+    db.commit()
+    db.refresh(db_application)
+
+    # Return API response
     return {
         "prediction": int(prediction),
         "decision": decision,
-        "probability": round(float(probability), 4)
+        "probability": round(float(probability), 4),
+        "capability_score": capability_score
     }
