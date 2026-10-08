@@ -1,6 +1,8 @@
 from fastapi import FastAPI, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel,Field
+from typing import Literal
 from sqlalchemy.orm import Session
+from fastapi import FastAPI, Depends, HTTPException
 
 from model.predict import predict_loan
 from app.database import SessionLocal
@@ -28,19 +30,43 @@ def home():
 
 class LoanApplication(BaseModel):
 
-    person_age: float
-    person_gender: str
-    person_education: str
-    person_income: float
-    person_emp_exp: int
-    person_home_ownership: str
-    loan_amnt: float
-    loan_intent: str
-    loan_int_rate: float
-    loan_percent_income: float
-    cb_person_cred_hist_length: float
-    credit_score: int
-    previous_loan_defaults_on_file: str
+    person_age: float = Field(gt=0)
+
+    person_gender: Literal["Male", "Female"]
+
+    person_education: Literal[
+        "Bachelor",
+        "Doctorate",
+        "High School",
+        "Master"
+    ]
+
+    person_income: float = Field(gt=0)
+    person_emp_exp: int = Field(ge=0)
+
+    person_home_ownership: Literal[
+        "OTHER",
+        "OWN",
+        "RENT"
+    ]
+
+    loan_amnt: float = Field(gt=0)
+
+    loan_intent: Literal[
+        "EDUCATION",
+        "HOMEIMPROVEMENT",
+        "MEDICAL",
+        "PERSONAL",
+        "VENTURE"
+    ]
+
+    loan_int_rate: float = Field(gt=0)
+    loan_percent_income: float = Field(ge=0, le=1)
+
+    cb_person_cred_hist_length: float = Field(ge=0)
+    credit_score: int = Field(ge=300, le=850)
+
+    previous_loan_defaults_on_file: Literal["Yes", "No"]
 
 
 @app.post("/predict")
@@ -83,3 +109,39 @@ def predict(
         "probability": round(float(probability), 4),
         "capability_score": capability_score
     }
+@app.get("/loan-status/{application_id}")
+def loan_status(
+    application_id: int,
+    db: Session = Depends(get_db)
+):
+    application = db.query(LoanApplicationDB).filter(
+        LoanApplicationDB.id == application_id
+    ).first()
+
+    if application is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Loan application not found"
+        )
+
+    return {
+        "application_id": application.id,
+        "prediction": application.prediction,
+        "decision": application.decision,
+        "probability": round(float(application.probability), 4)
+    }
+@app.get("/loan-applications")
+def get_all_applications(
+    db: Session = Depends(get_db)
+):
+    applications = db.query(LoanApplicationDB).all()
+
+    return [
+        {
+            "application_id": application.id,
+            "prediction": application.prediction,
+            "decision": application.decision,
+            "probability": round(float(application.probability), 4)
+        }
+        for application in applications
+    ]
