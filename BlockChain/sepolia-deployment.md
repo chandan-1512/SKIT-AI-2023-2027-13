@@ -36,3 +36,10 @@ The contract creator shown on Sepolia Etherscan matches the configured deployer 
 - Applicant: `0xd888dE97400eFe6FeB15e08d71F8C6ff613A76C2`
 - Loan Amount: `100000`
 - Initial Status: `Pending`
+
+## Final Application Status Validation
+
+- Application ID: `1`
+- `getLoanApplicationStatus(1)`: `0`
+- Status meaning: `Pending`
+- Result: Sepolia contract state and application status verified successfully.
