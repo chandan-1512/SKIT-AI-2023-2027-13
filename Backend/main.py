@@ -1,18 +1,22 @@
-from fastapi import FastAPI, Depends
-from pydantic import BaseModel,Field
+
+from fastapi import FastAPI, Depends, HTTPException
+from pydantic import BaseModel, Field
 from typing import Literal
 from sqlalchemy.orm import Session
-from fastapi import FastAPI, Depends, HTTPException
 
 from model.predict import predict_loan
 from app.database import SessionLocal
 from app.models import LoanApplication as LoanApplicationDB
 
 
-app = FastAPI()
+app = FastAPI(
+    title="AI Powered Loan Approval API",
+    description="Loan prediction and application management API",
+    version="1.0.0"
+)
 
 
-# Database session
+# Database session dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -21,6 +25,7 @@ def get_db():
         db.close()
 
 
+# Health check
 @app.get("/")
 def home():
     return {
@@ -28,6 +33,7 @@ def home():
     }
 
 
+# Loan application request schema
 class LoanApplication(BaseModel):
 
     person_age: float = Field(gt=0)
@@ -69,19 +75,25 @@ class LoanApplication(BaseModel):
     previous_loan_defaults_on_file: Literal["Yes", "No"]
 
 
+# Loan prediction API
 @app.post("/predict")
 def predict(
     application: LoanApplication,
     db: Session = Depends(get_db)
 ):
-
     # Convert API input into dictionary
     applicant_data = application.model_dump()
 
-    # Predict using trained XGBoost model
-    prediction, probability, capability_score = predict_loan(
-        applicant_data
-    )
+    # Run trained ML model
+    try:
+        prediction, probability, capability_score = predict_loan(
+            applicant_data
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Loan prediction failed"
+        )
 
     # Generate decision
     if prediction == 1:
@@ -89,7 +101,7 @@ def predict(
     else:
         decision = "Loan Rejected"
 
-    # Create database record
+    # Prepare database record
     db_application = LoanApplicationDB(
         **applicant_data,
         prediction=int(prediction),
@@ -97,18 +109,29 @@ def predict(
         probability=float(probability)
     )
 
-    # Save prediction result to PostgreSQL
-    db.add(db_application)
-    db.commit()
-    db.refresh(db_application)
+    # Save record with transaction rollback on failure
+    try:
+        db.add(db_application)
+        db.commit()
+        db.refresh(db_application)
 
-    # Return API response
+    except Exception:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to save loan application"
+        )
+
+    # Return prediction result
     return {
         "prediction": int(prediction),
         "decision": decision,
         "probability": round(float(probability), 4),
         "capability_score": capability_score
     }
+
+
+# Retrieve a specific loan application's status
 @app.get("/loan-status/{application_id}")
 def loan_status(
     application_id: int,
@@ -130,6 +153,9 @@ def loan_status(
         "decision": application.decision,
         "probability": round(float(application.probability), 4)
     }
+
+
+# Retrieve all loan applications
 @app.get("/loan-applications")
 def get_all_applications(
     db: Session = Depends(get_db)
