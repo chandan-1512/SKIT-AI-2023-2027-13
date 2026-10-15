@@ -18,6 +18,12 @@ const TRANSACTIONS = [
     expectedDecision: "Approved",
   },
   {
+  label: "Application 2 Submission",
+  hash: "0xc37bbafd561bb64f2baf0ef331f905a65a7b8454de303453289339a022f09b0c",
+  expectedEvent: "LoanApplicationSubmitted",
+  applicationId: 2n,
+},
+  {
     label: "Application 2 Rejection",
     hash: "0x954cf37a83d1495ed73cf19ccadf14ad219cd08572ff20183fc2283c20bc70a4",
     expectedEvent: "LoanDecisionRecorded",
@@ -43,7 +49,9 @@ async function main() {
     if (!receipt) {
       throw new Error(`${tx.label}: transaction receipt not found.`);
     }
-
+    if (receipt.hash.toLowerCase() !== tx.hash.toLowerCase()) {
+      throw new Error(`${tx.label}: transaction hash mismatch.`);
+    }
     if (receipt.status !== 1) {
       throw new Error(`${tx.label}: transaction failed.`);
     }
