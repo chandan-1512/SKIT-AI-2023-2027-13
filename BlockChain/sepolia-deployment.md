@@ -102,3 +102,28 @@ The `verify-sepolia-events.ts` script successfully verified all three transactio
 - Status enum values used by the contract: `0 = Pending`, `1 = Approved`, `2 = Rejected`.
 - The Hardhat run displayed a deprecation warning for `hre.network.connect()`. This warning did not prevent the verification script from completing successfully.
 - No new deployment was required for these validations.
+
+## 9. Week 4 — Historical and Live Event Logging
+
+- Network: Ethereum Sepolia
+- Contract: LoanDecisionRegistry
+- Contract Address: 0xc7E21E406ECB753eD0b9caB836601057a0577eD8
+- Logger Script: scripts/log-sepolia-events.ts
+
+### Events Logged
+
+- LoanApplicationSubmitted
+- LoanApplicationStatusUpdated
+- LoanDecisionRecorded
+
+### Historical Event Validation
+
+- Application 1 submission and approval events were retrieved.
+- Application 2 submission and rejection events were retrieved.
+- Transaction hashes, block numbers and decoded event arguments were printed.
+- Application 1 final status: Approved (1).
+- Application 2 final status: Rejected (2).
+
+### Live Event Listener
+
+The logger successfully completed the targeted historical event scan and started listening for new contract events. Live receipt of a new event remains to be demonstrated separately.
