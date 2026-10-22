@@ -15,6 +15,8 @@ df = df.drop_duplicates()
 
 # Separate features and target
 X = df.drop("loan_status", axis=1)
+print("Training feature count:", len(X.columns))
+print("Training feature names:", X.columns.tolist())
 y = df["loan_status"]
 
 
