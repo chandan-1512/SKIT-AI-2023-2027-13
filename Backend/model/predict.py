@@ -34,7 +34,7 @@ SCALER_PATH = os.path.join(
 # Load trained XGBoost model
 model = joblib.load(MODEL_PATH)
 
-
+# print("Model classes:", model.classes_)
 # Load fitted scaler
 scaler = joblib.load(SCALER_PATH)
 
@@ -47,6 +47,8 @@ def predict_loan(applicant_data):
 
     # Apply the fitted training scaler
     data_processed = scaler.transform(data)
+    # print("DEBUG - Processed input:")
+    # print(data_processed)
 
     # Get probability of class 1
     probability = model.predict_proba(data_processed)[0][1]
@@ -96,19 +98,26 @@ def predict_loan(applicant_data):
         capability_score += 2
 
     # -------------------------------------------------
-    # Final decision
-    # -------------------------------------------------
+#     
+   
+# -------------------------------------------------
+# Final decision: Capability Score + Model Probability
+# -------------------------------------------------
 
-    # Strong applicant
-    if capability_score >= 7:
-        prediction = 1
+    if capability_score >= 7 and probability >= 0.20:
+     prediction = 1
 
-    # Normal applicant
     elif capability_score >= 5 and probability >= 0.30:
-        prediction = 1
+     prediction = 1
 
-    # Risky applicant
+    elif capability_score >= 3 and probability >= 0.60:
+     prediction = 1
+
     else:
-        prediction = 0
+      prediction = 0
+
+    print("Capability Score:", capability_score)
+    print("Final Prediction:", prediction)
+    print("Approval Probability:", round(float(probability), 4))
 
     return prediction, probability, capability_score
