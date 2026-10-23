@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { WalletProvider } from './context/WalletContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AdminRoute from './components/auth/AdminRoute';
 import AppLayout from './layouts/AppLayout';
@@ -17,33 +18,35 @@ import AdminDashboardPage from './pages/AdminDashboardPage';
 export default function App() {
   return (
     <AuthProvider>
-      <Routes>
-        {/* ── Public auth routes (no Navbar / protected shell) ── */}
-        <Route element={<AuthLayout />}>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-        </Route>
-
-        {/* ── Protected routes (require auth, share AppLayout shell) ── */}
-        <Route
-          element={
-            <ProtectedRoute>
-              <AppLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index path="/" element={<LoanRequestPage />} />
-          <Route path="/dashboard" element={<UserDashboardPage />} />
-
-          {/* ── Admin-only routes (require isAdmin flag) ── */}
-          <Route element={<AdminRoute />}>
-            <Route path="/admin" element={<AdminDashboardPage />} />
+      <WalletProvider>
+        <Routes>
+          {/* ── Public auth routes (no Navbar / protected shell) ── */}
+          <Route element={<AuthLayout />}>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
           </Route>
-        </Route>
 
-        {/* Catch-all */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          {/* ── Protected routes (require auth, share AppLayout shell) ── */}
+          <Route
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index path="/" element={<LoanRequestPage />} />
+            <Route path="/dashboard" element={<UserDashboardPage />} />
+
+            {/* ── Admin-only routes (require isAdmin flag) ── */}
+            <Route element={<AdminRoute />}>
+              <Route path="/admin" element={<AdminDashboardPage />} />
+            </Route>
+          </Route>
+
+          {/* Catch-all */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </WalletProvider>
     </AuthProvider>
   );
 }

@@ -10,3 +10,4 @@ export { default as StepIndicator } from './StepIndicator';
 export { default as LoadingSpinner } from './LoadingSpinner';
 export { default as Badge } from './Badge';
 export { default as Navbar } from './Navbar';
+export { default as WalletConnect } from './WalletConnect';
