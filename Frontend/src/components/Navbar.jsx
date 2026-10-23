@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Button from './Button';
+import WalletConnect from './WalletConnect';
 
 const NAV_LINKS = [
   { to: '/', label: 'Loan Request', end: true },
@@ -15,8 +16,8 @@ const NAV_LINKS = [
  *   - Authenticated  → shows user avatar + display name + Logout button
  *   - Unauthenticated → shows Login / Register links
  *
- * Wallet connect button is intentionally non-functional (placeholder).
- * ethers.js + MetaMask integration lands in Sprint 3.
+ * Wallet integration (Sprint 4 — Task 1):
+ *   - WalletConnect component handles all MetaMask states via WalletContext.
  */
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -89,23 +90,8 @@ export default function Navbar() {
                   </span>
                 </div>
 
-                {/* Wallet Connect (placeholder — Sprint 3) */}
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  id="wallet-connect-btn"
-                  onClick={() => {
-                    /* TODO (Sprint 3): ethers.js MetaMask integration */
-                  }}
-                >
-                  <span className="flex items-center gap-2">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="2" y="5" width="20" height="14" rx="2" />
-                      <path d="M16 12h2" />
-                    </svg>
-                    Connect Wallet
-                  </span>
-                </Button>
+                {/* Wallet Connect — Sprint 4, Task 1 */}
+                <WalletConnect />
 
                 {/* Logout */}
                 <Button

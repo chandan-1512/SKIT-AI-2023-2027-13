@@ -1,9 +1,66 @@
 # SKIT AI Lending Protocol — Frontend
 
-> **Sprint 2** — Auth Layer + Loan Application Module + Vitest test suite.  
-> Login, Registration, oracle credit-score simulation, and loan terms display are all functional.
+> **Sprint 4 — Task 1 (Wallet Integration)** — MetaMask / ethers.js v6 wired into the Navbar.  
+> WalletContext manages connect/disconnect, network detection, and account-change events.
+> Previous sprints: Sprint 2 (auth + loan form), Sprint 3 (UI polish + dashboard shells).
 
 ---
+
+## Sprint 4 — Task 1: Wallet Integration
+
+### What was implemented
+
+| # | Deliverable | Files |
+|---|---|---|
+| 1 | Install **ethers.js v6** | `package.json` |
+| 2 | **`WalletContext.jsx`** — global wallet state provider | `src/context/WalletContext.jsx` |
+| 3 | **`WalletConnect.jsx`** — Navbar button with full MetaMask UX | `src/components/WalletConnect.jsx` |
+| 4 | Wire `WalletProvider` into `App.jsx` | `src/App.jsx` |
+| 5 | Replace placeholder button in `Navbar.jsx` | `src/components/Navbar.jsx` |
+| 6 | Updated `.env.example` with Sprint 4 variables | `.env.example` |
+
+### WalletContext API (`useWallet()`)
+
+```js
+import { useWallet } from '../context/WalletContext';
+
+const {
+  isMetaMaskAvailable, // false if window.ethereum is absent
+  isConnected,         // true once user has approved connection
+  isCorrectNetwork,    // true on Sepolia (11155111) or local Hardhat (31337)
+  isConnecting,        // true while eth_requestAccounts is pending
+  address,             // full hex address or null
+  addressShort,        // "0x1234…abcd" or null
+  chainId,             // numeric chain ID or null
+  networkName,         // "Sepolia" | "Hardhat (local)" | "Chain <n>" | null
+  provider,            // ethers BrowserProvider instance (for read-only calls)
+  connect,             // () => Promise<void>  — triggers MetaMask popup
+  disconnect,          // () => void           — clears app state (soft disconnect)
+  switchToSepolia,     // () => Promise<void>  — wallet_switchEthereumChain
+} = useWallet();
+```
+
+### WalletConnect button states
+
+| State | Rendered UI |
+|---|---|
+| MetaMask not installed | "Install MetaMask" link → metamask.io |
+| Not connected | "Connect Wallet" button |
+| Connecting (pending) | Spinner + "Connecting…" |
+| Connected, Sepolia ✅ | Truncated address + green badge + dropdown |
+| Connected, wrong network ⚠️ | Red pulsing address + "Switch to Sepolia" in dropdown |
+
+### Allowed networks
+
+`WalletContext.ALLOWED_CHAIN_IDS` (a `Set`) controls which chains are considered "correct":
+
+```js
+import { ALLOWED_CHAIN_IDS } from './context/WalletContext';
+// Default: new Set([11155111 /* Sepolia */, 31337 /* local Hardhat */])
+```
+
+---
+
 
 ## Getting Started
 
@@ -161,10 +218,13 @@ import { Button, Card, Input, StepIndicator, LoadingSpinner, Badge } from '../co
 See [`.env.example`](.env.example) for all variables.  
 All vars must be prefixed with `VITE_` to be accessible in-browser via `import.meta.env`.
 
-| Variable               | Description                                 |
-|------------------------|---------------------------------------------|
-| `VITE_CONTRACT_ADDRESS`| Deployed lending contract address           |
-| `VITE_RPC_URL`         | JSON-RPC endpoint (Alchemy / Infura / local)|
+| Variable               | Description                                  |
+|------------------------|----------------------------------------------|
+| `VITE_CONTRACT_ADDRESS`| Deployed lending contract address            |
+| `VITE_RPC_URL`         | JSON-RPC endpoint (Alchemy / Infura / local) |
+| `VITE_CHAIN_ID`        | Target chain ID (11155111=Sepolia, 31337=local) |
+| `VITE_EXPLORER_URL`    | Block explorer base URL (for tx links)       |
+| `VITE_AI_SCORE_URL`    | FastAPI `/score` endpoint (Task 4, optional) |
 
 > Warning: Never commit `.env` to version control. `.env.example` is safe to commit.
 
