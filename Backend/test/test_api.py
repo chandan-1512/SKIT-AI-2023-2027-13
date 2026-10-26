@@ -653,3 +653,23 @@ def test_loan_applications_empty():
 
     assert response.status_code == 200
     assert response.json() == []
+def test_invalid_loan_percent_income():
+    payload = {
+        "person_age": 30,
+        "person_gender": "Male",
+        "person_education": "Bachelor",
+        "person_income": 72000,
+        "person_emp_exp": 6,
+        "person_home_ownership": "RENT",
+        "loan_amnt": 12000,
+        "loan_intent": "PERSONAL",
+        "loan_int_rate": 11.5,
+        "loan_percent_income": 0.80,
+        "cb_person_cred_hist_length": 6,
+        "credit_score": 710,
+        "previous_loan_defaults_on_file": "No"
+    }
+
+    response = client.post("/predict", json=payload)
+
+    assert response.status_code == 422
