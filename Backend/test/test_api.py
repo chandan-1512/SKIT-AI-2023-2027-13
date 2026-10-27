@@ -673,3 +673,100 @@ def test_invalid_loan_percent_income():
     response = client.post("/predict", json=payload)
 
     assert response.status_code == 422
+def test_predict_response_schema():
+    payload = {
+        "person_age": 30,
+        "person_gender": "Male",
+        "person_education": "Bachelor",
+        "person_income": 72000,
+        "person_emp_exp": 6,
+        "person_home_ownership": "RENT",
+        "loan_amnt": 12000,
+        "loan_intent": "PERSONAL",
+        "loan_int_rate": 11.5,
+        "loan_percent_income": 12000 / 72000,
+        "cb_person_cred_hist_length": 6,
+        "credit_score": 710,
+        "previous_loan_defaults_on_file": "No"
+    }
+
+    mock_db = MagicMock()
+
+    def override_get_db():
+        yield mock_db
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    try:
+        with patch("main.predict_loan", return_value=(1, 0.95, 8)):
+            response = client.post("/predict", json=payload)
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+
+    data = response.json()
+    assert set(data.keys()) == {
+        "prediction",
+        "decision",
+        "probability",
+        "capability_score"
+    }
+    assert data["prediction"] == 1
+    assert data["decision"] == "Loan Approved"
+    assert isinstance(data["probability"], (int, float))
+    assert 0 <= data["probability"] <= 1
+    assert isinstance(data["capability_score"], int)
+    assert 0 <= data["capability_score"] <= 9
+def test_invalid_gender():
+    payload = {
+        "person_age": 30,
+        "person_gender": "Unknown",
+        "person_education": "Bachelor",
+        "person_income": 72000,
+        "person_emp_exp": 6,
+        "person_home_ownership": "RENT",
+        "loan_amnt": 12000,
+        "loan_intent": "PERSONAL",
+        "loan_int_rate": 11.5,
+        "loan_percent_income": 12000 / 72000,
+        "cb_person_cred_hist_length": 6,
+        "credit_score": 710,
+        "previous_loan_defaults_on_file": "No"
+    }
+
+    response = client.post("/predict", json=payload)
+
+    assert response.status_code == 422
+def test_credit_score_minimum_boundary():
+    payload = {
+        "person_age": 30,
+        "person_gender": "Male",
+        "person_education": "Bachelor",
+        "person_income": 72000,
+        "person_emp_exp": 6,
+        "person_home_ownership": "RENT",
+        "loan_amnt": 12000,
+        "loan_intent": "PERSONAL",
+        "loan_int_rate": 11.5,
+        "loan_percent_income": 12000 / 72000,
+        "cb_person_cred_hist_length": 6,
+        "credit_score": 300,
+        "previous_loan_defaults_on_file": "No"
+    }
+
+    mock_db = MagicMock()
+
+    def override_get_db():
+        yield mock_db
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    try:
+        with patch("main.predict_loan", return_value=(1, 0.95, 8)):
+            response = client.post("/predict", json=payload)
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["prediction"] == 1
