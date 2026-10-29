@@ -1,9 +1,9 @@
 
 from fastapi import FastAPI, Depends, HTTPException
-from pydantic import BaseModel, Field
+
 from typing import Literal
 from sqlalchemy.orm import Session
-
+from pydantic import BaseModel, Field, model_validator
 from model.predict import predict_loan
 from app.database import SessionLocal
 from app.models import LoanApplication as LoanApplicationDB
@@ -32,6 +32,23 @@ def home():
         "message": "Backend is running successfully"
     }
 
+
+class LoanPredictionResponse(BaseModel):
+    prediction: Literal[0, 1]
+    decision: Literal["Loan Approved", "Loan Rejected"]
+    probability: float = Field(ge=0, le=1)
+    capability_score: int = Field(ge=0, le=9)
+
+    @model_validator(mode="after")
+    def validate_decision(self):
+        expected = (
+            "Loan Approved"
+            if self.prediction == 1
+            else "Loan Rejected"
+        )
+        if self.decision != expected:
+            raise ValueError("Decision does not match prediction")
+        return self
 
 # Loan application request schema
 class LoanApplication(BaseModel):
@@ -73,10 +90,20 @@ class LoanApplication(BaseModel):
     credit_score: int = Field(ge=300, le=850)
 
     previous_loan_defaults_on_file: Literal["Yes", "No"]
+    @model_validator(mode="after")
+    def validate_loan_percent_income(self):
+        expected_ratio = self.loan_amnt / self.person_income
+
+        if abs(self.loan_percent_income - expected_ratio) > 0.01:
+            raise ValueError(
+                "loan_percent_income must match loan_amnt / person_income"
+            )
+
+        return self
 
 
 # Loan prediction API
-@app.post("/predict")
+@app.post("/predict", response_model=LoanPredictionResponse)
 def predict(
     application: LoanApplication,
     db: Session = Depends(get_db)

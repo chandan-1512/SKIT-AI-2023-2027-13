@@ -21,6 +21,7 @@ model = XGBClassifier(
     eval_metric="logloss"
 )
 
+
 # Train final model
 model.fit(
     X_train_processed,
@@ -49,3 +50,6 @@ print(f"Model: XGBoost")
 print(f"Estimators: 100")
 print(f"Threshold: 0.50")
 print(f"Saved at: {model_path}")
+print(f"Estimators: {model.n_estimators}")
+print(f"Max Depth: {model.max_depth}")
+print(f"Learning Rate: {model.learning_rate}")
