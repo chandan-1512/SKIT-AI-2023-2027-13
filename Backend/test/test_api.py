@@ -770,3 +770,76 @@ def test_credit_score_minimum_boundary():
 
     assert response.status_code == 200
     assert response.json()["prediction"] == 1
+def test_predict_rejection():
+    payload = {
+        "person_age": 26,
+        "person_gender": "Male",
+        "person_education": "High School",
+        "person_income": 30000,
+        "person_emp_exp": 1,
+        "person_home_ownership": "RENT",
+        "loan_amnt": 12000,
+        "loan_intent": "PERSONAL",
+        "loan_int_rate": 18,
+        "loan_percent_income": 12000 / 30000,
+        "cb_person_cred_hist_length": 2,
+        "credit_score": 520,
+        "previous_loan_defaults_on_file": "Yes"
+    }
+
+    mock_db = MagicMock()
+
+    def override_get_db():
+        yield mock_db
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    try:
+        with patch(
+            "main.predict_loan",
+            return_value=(0, 0.03, 0)
+        ):
+            response = client.post("/predict", json=payload)
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["prediction"] == 0
+    assert data["decision"] == "Loan Rejected"
+    assert data["probability"] == 0.03
+    assert data["capability_score"] == 0
+
+    mock_db.add.assert_called_once()
+    mock_db.commit.assert_called_once()
+def test_response_schema_rejects_invalid_probability():
+    from pydantic import ValidationError
+    from main import LoanPredictionResponse
+
+    try:
+        LoanPredictionResponse(
+            prediction=1,
+            decision="Loan Approved",
+            probability=1.5,
+            capability_score=8
+        )
+        assert False, "Invalid probability should be rejected"
+    except ValidationError:
+        pass
+
+
+def test_response_schema_rejects_mismatched_decision():
+    from pydantic import ValidationError
+    from main import LoanPredictionResponse
+
+    try:
+        LoanPredictionResponse(
+            prediction=1,
+            decision="Loan Rejected",
+            probability=0.5,
+            capability_score=5
+        )
+        assert False, "Mismatched decision should be rejected"
+    except ValidationError:
+        pass
