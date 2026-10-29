@@ -4,15 +4,17 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "test": "node --test services/blockchainService.test.js",
+  "verify:sepolia": "node services/verifySepolia.js"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
     "dotenv": "^18.0.6",
-    "ethers": "^6.17.0"
+    "ethers": "^6.17.0",
+    "web3": "^4.16.0"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox-mocha-ethers": "^3.0.7",
