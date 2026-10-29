@@ -1,12 +1,31 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
 
+from fastapi import FastAPI, Depends, HTTPException
+
+from typing import Literal
+from sqlalchemy.orm import Session
+from pydantic import BaseModel, Field, model_validator
 from model.predict import predict_loan
+from app.database import SessionLocal
+from app.models import LoanApplication as LoanApplicationDB
 
 
-app = FastAPI()
+app = FastAPI(
+    title="AI Powered Loan Approval API",
+    description="Loan prediction and application management API",
+    version="1.0.0"
+)
 
 
+# Database session dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+# Health check
 @app.get("/")
 def home():
     return {
@@ -14,37 +33,168 @@ def home():
     }
 
 
+class LoanPredictionResponse(BaseModel):
+    prediction: Literal[0, 1]
+    decision: Literal["Loan Approved", "Loan Rejected"]
+    probability: float = Field(ge=0, le=1)
+    capability_score: int = Field(ge=0, le=9)
+
+    @model_validator(mode="after")
+    def validate_decision(self):
+        expected = (
+            "Loan Approved"
+            if self.prediction == 1
+            else "Loan Rejected"
+        )
+        if self.decision != expected:
+            raise ValueError("Decision does not match prediction")
+        return self
+
+# Loan application request schema
 class LoanApplication(BaseModel):
 
-    person_age: float
-    person_gender: str
-    person_education: str
-    person_income: float
-    person_emp_exp: int
-    person_home_ownership: str
-    loan_amnt: float
-    loan_intent: str
-    loan_int_rate: float
-    loan_percent_income: float
-    cb_person_cred_hist_length: float
-    credit_score: int
-    previous_loan_defaults_on_file: str
+    person_age: float = Field(gt=0)
+
+    person_gender: Literal["Male", "Female"]
+
+    person_education: Literal[
+        "Bachelor",
+        "Doctorate",
+        "High School",
+        "Master"
+    ]
+
+    person_income: float = Field(gt=0)
+    person_emp_exp: int = Field(ge=0)
+
+    person_home_ownership: Literal[
+        "OTHER",
+        "OWN",
+        "RENT"
+    ]
+
+    loan_amnt: float = Field(gt=0)
+
+    loan_intent: Literal[
+        "EDUCATION",
+        "HOMEIMPROVEMENT",
+        "MEDICAL",
+        "PERSONAL",
+        "VENTURE"
+    ]
+
+    loan_int_rate: float = Field(gt=0)
+    loan_percent_income: float = Field(ge=0, le=1)
+
+    cb_person_cred_hist_length: float = Field(ge=0)
+    credit_score: int = Field(ge=300, le=850)
+
+    previous_loan_defaults_on_file: Literal["Yes", "No"]
+    @model_validator(mode="after")
+    def validate_loan_percent_income(self):
+        expected_ratio = self.loan_amnt / self.person_income
+
+        if abs(self.loan_percent_income - expected_ratio) > 0.01:
+            raise ValueError(
+                "loan_percent_income must match loan_amnt / person_income"
+            )
+
+        return self
 
 
-@app.post("/predict")
-def predict(application: LoanApplication):
-
+# Loan prediction API
+@app.post("/predict", response_model=LoanPredictionResponse)
+def predict(
+    application: LoanApplication,
+    db: Session = Depends(get_db)
+):
+    # Convert API input into dictionary
     applicant_data = application.model_dump()
 
-    prediction, probability = predict_loan(applicant_data)
+    # Run trained ML model
+    try:
+        prediction, probability, capability_score = predict_loan(
+            applicant_data
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Loan prediction failed"
+        )
 
+    # Generate decision
     if prediction == 1:
         decision = "Loan Approved"
     else:
         decision = "Loan Rejected"
 
+    # Prepare database record
+    db_application = LoanApplicationDB(
+        **applicant_data,
+        prediction=int(prediction),
+        decision=decision,
+        probability=float(probability)
+    )
+
+    # Save record with transaction rollback on failure
+    try:
+        db.add(db_application)
+        db.commit()
+        db.refresh(db_application)
+
+    except Exception:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to save loan application"
+        )
+
+    # Return prediction result
     return {
         "prediction": int(prediction),
         "decision": decision,
-        "probability": round(float(probability), 4)
+        "probability": round(float(probability), 4),
+        "capability_score": capability_score
     }
+
+
+# Retrieve a specific loan application's status
+@app.get("/loan-status/{application_id}")
+def loan_status(
+    application_id: int,
+    db: Session = Depends(get_db)
+):
+    application = db.query(LoanApplicationDB).filter(
+        LoanApplicationDB.id == application_id
+    ).first()
+
+    if application is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Loan application not found"
+        )
+
+    return {
+        "application_id": application.id,
+        "prediction": application.prediction,
+        "decision": application.decision,
+        "probability": round(float(application.probability), 4)
+    }
+
+
+# Retrieve all loan applications
+@app.get("/loan-applications")
+def get_all_applications(
+    db: Session = Depends(get_db)
+):
+    applications = db.query(LoanApplicationDB).all()
+
+    return [
+        {
+            "application_id": application.id,
+            "prediction": application.prediction,
+            "decision": application.decision,
+            "probability": round(float(application.probability), 4)
+        }
+        for application in applications
+    ]
