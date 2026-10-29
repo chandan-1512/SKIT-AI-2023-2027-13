@@ -1,75 +1,43 @@
-// import { useState, useCallback } from 'react';
-// import LoanRequestForm from '../components/loan/LoanRequestForm';
-// import LoanTermsDisplay from '../components/loan/LoanTermsDisplay';
-
-// /**
-//  * LoanRequestPage — Composes the full loan application flow.
-//  *
-//  * State machine:
-//  *   'form'  → user fills in amount and triggers oracle check
-//  *   'terms' → oracle complete; LoanTermsDisplay is shown
-//  *
-//  * Resetting returns to 'form' with clean state.
-//  */
-// export default function LoanRequestPage() {
-//   const [stage, setStage]           = useState('form'); // 'form' | 'terms'
-//   const [loanAmount, setLoanAmount] = useState(null);
-//   const [creditScore, setCreditScore] = useState(null);
-
-//   /** Called by LoanRequestForm once the mock oracle resolves. */
-//   const handleScoreReceived = useCallback((amount, score) => {
-//     setLoanAmount(amount);
-//     setCreditScore(score);
-//     setStage('terms');
-//   }, []);
-
-//   /** Reset back to the form so the user can re-run the oracle. */
-//   const handleReset = useCallback(() => {
-//     setStage('form');
-//     setLoanAmount(null);
-//     setCreditScore(null);
-//   }, []);
-
-//   return (
-//     <div className="max-w-2xl mx-auto space-y-8 animate-slide-up">
-//       {/* ── Page header ── */}
-//       <div>
-//         <h1 className="text-3xl font-bold text-gradient mb-1">Request a Loan</h1>
-//         <p className="text-[var(--color-text-muted)]">
-//           {stage === 'form'
-//             ? 'Enter your loan amount and check your on-chain credit score to see personalised terms.'
-//             : 'Your credit score has been received. Review the terms below before confirming.'}
-//         </p>
-//       </div>
-
-//       {/* ── Stage: form ── */}
-//       {stage === 'form' && (
-//         <LoanRequestForm onScoreReceived={handleScoreReceived} />
-//       )}
-
-//       {/* ── Stage: terms ── */}
-//       {stage === 'terms' && loanAmount !== null && creditScore !== null && (
-//         <LoanTermsDisplay
-//           loanAmount={loanAmount}
-//           creditScore={creditScore}
-//           onReset={handleReset}
-//         />
-//       )}
-//     </div>
-//   );
-// }
-
-// ---chandan code---
+/**
+ * LoanRequestPage.jsx — Composes the full loan application flow.
+ *
+ * Sprint 4 — Task 2: Contract Integration
+ *
+ * Stage machine:
+ *   'form'      → ApplicantDetailsForm (AI model prediction via FastAPI)
+ *   'oracle'    → LoanRequestForm (submit to blockchain + wait for oracle)
+ *   'terms'     → LoanTermsDisplay (show decision + confirm borrow)
+ *
+ * Flow:
+ *   1. User fills in financial details → FastAPI AI model gives a prediction
+ *   2. If AI approves, user moves to blockchain stage:
+ *      - Specifies ETH amount, submits registerLoanApplication() tx
+ *      - Polls for oracle decision (LoanApplicationStatusUpdated event)
+ *   3. LoanTermsDisplay shows the oracle's Approved/Rejected decision
+ *      with full loan terms; confirm button fires the borrow tx.
+ *
+ * Both the AI stage and the blockchain stage are preserved — they serve
+ * different purposes:
+ *   • AI model  → fast off-chain prediction (no gas cost)
+ *   • Blockchain → authoritative on-chain credit decision + loan registration
+ */
 
 import { useState, useCallback } from 'react';
 import ApplicantDetailsForm from '../components/loan/ApplicantDetailsForm';
+import LoanRequestForm from '../components/loan/LoanRequestForm';
+import LoanTermsDisplay from '../components/loan/LoanTermsDisplay';
 import Card from '../components/Card';
 import Button from '../components/Button';
 
-function LoanPredictionResult({ result, onReset }) {
-  const approved = result?.prediction === 1;
+// ─── Stage: AI result display ─────────────────────────────────────────────────
 
-  const probability = Number(result?.probability);
+/**
+ * Shows the FastAPI AI model prediction result.
+ * If approved, offers a "Proceed to blockchain" button.
+ */
+function AIPredictionResult({ result, onProceed, onReset }) {
+  const approved      = result?.prediction === 1;
+  const probability   = Number(result?.probability);
   const capabilityScore = result?.capability_score;
 
   return (
@@ -79,6 +47,7 @@ function LoanPredictionResult({ result, onReset }) {
           AI Loan Prediction Result
         </h2>
 
+        {/* Decision banner */}
         <div
           className={`rounded-xl border p-5 ${
             approved
@@ -86,35 +55,24 @@ function LoanPredictionResult({ result, onReset }) {
               : 'border-red-500/40 bg-red-500/10'
           }`}
         >
-          <p className="text-sm text-[var(--color-text-muted)]">
-            Model Decision
-          </p>
-
-          <p
-            className={`mt-1 text-2xl font-bold ${
-              approved ? 'text-green-600' : 'text-red-600'
-            }`}
-          >
+          <p className="text-sm text-[var(--color-text-muted)]">Model Decision</p>
+          <p className={`mt-1 text-2xl font-bold ${approved ? 'text-green-500' : 'text-red-500'}`}>
             {result?.decision || 'Prediction unavailable'}
           </p>
         </div>
 
+        {/* Stats */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="rounded-lg border border-[var(--color-border)] p-4">
-            <p className="text-sm text-[var(--color-text-muted)]">
-              Model Probability
-            </p>
+            <p className="text-sm text-[var(--color-text-muted)]">Model Probability</p>
             <p className="mt-1 text-xl font-semibold text-[var(--color-text-primary)]">
               {Number.isFinite(probability)
                 ? `${(probability * 100).toFixed(2)}%`
                 : 'Not available'}
             </p>
           </div>
-
           <div className="rounded-lg border border-[var(--color-border)] p-4">
-            <p className="text-sm text-[var(--color-text-muted)]">
-              Capability Score
-            </p>
+            <p className="text-sm text-[var(--color-text-muted)]">Capability Score</p>
             <p className="mt-1 text-xl font-semibold text-[var(--color-text-primary)]">
               {capabilityScore ?? 'Not available'}
             </p>
@@ -122,54 +80,138 @@ function LoanPredictionResult({ result, onReset }) {
         </div>
 
         <p className="text-sm text-[var(--color-text-muted)]">
-          This result is generated by the AI model and is not a guarantee of
-          approval by a real lender.
+          This result is generated by the AI model and is not a guarantee of approval.
         </p>
 
-        <Button
-          type="button"
-          variant="primary"
-          size="lg"
-          className="w-full"
-          onClick={onReset}
-        >
-          New Prediction
-        </Button>
+        {/* Action buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-[var(--color-border)]">
+          {approved ? (
+            <Button
+              id="proceed-to-blockchain-btn"
+              variant="primary"
+              size="lg"
+              className="flex-1"
+              onClick={onProceed}
+            >
+              <span className="flex items-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                </svg>
+                Proceed to blockchain application
+              </span>
+            </Button>
+          ) : (
+            <p className="flex-1 text-sm text-[var(--color-text-muted)] italic py-2">
+              AI model predicted rejection. You may still try submitting on-chain, but approval is unlikely.
+            </p>
+          )}
+          <Button
+            id="new-prediction-btn"
+            variant="ghost"
+            size="lg"
+            onClick={onReset}
+          >
+            New prediction
+          </Button>
+        </div>
       </div>
     </Card>
   );
 }
 
+// ─── Page component ────────────────────────────────────────────────────────────
+
 export default function LoanRequestPage() {
-  const [result, setResult] = useState(null);
+  // Stage: 'form' | 'ai-result' | 'oracle' | 'terms'
+  const [stage, setStage]               = useState('form');
+  const [aiResult, setAiResult]         = useState(null);
+  const [loanAmount, setLoanAmount]     = useState(null);
+  const [creditScore, setCreditScore]   = useState(null);
+  const [oracleResult, setOracleResult] = useState(null);
 
-  const handlePredictionReceived = useCallback((predictionResult) => {
-    setResult(predictionResult);
+  // Stage descriptions for the header
+  const stageDescription = {
+    'form':      'Enter your financial details to get an AI-powered loan prediction.',
+    'ai-result': 'Your AI prediction is ready. Proceed to submit on-chain if approved.',
+    'oracle':    'Specify your ETH amount and submit the application to the blockchain.',
+    'terms':     'Your credit decision has been received. Review the terms and confirm.',
+  }[stage];
+
+  // ── Handlers ────────────────────────────────────────────────────────────────
+
+  /** Called by ApplicantDetailsForm when the AI model responds. */
+  const handlePredictionReceived = useCallback((result) => {
+    setAiResult(result);
+    setStage('ai-result');
   }, []);
 
-  const handleReset = useCallback(() => {
-    setResult(null);
+  /** Called when user clicks "Proceed to blockchain application" */
+  const handleProceedToOracle = useCallback(() => {
+    setStage('oracle');
   }, []);
+
+  /**
+   * Called by LoanRequestForm once the oracle resolves.
+   * @param {number} amount
+   * @param {import('../hooks/useContractOracle').OracleResult} result
+   */
+  const handleScoreReceived = useCallback((amount, result) => {
+    // Derive a synthetic credit score from the oracle status for the ScoreGauge UI:
+    //   Approved  → 700  (maps to 'low' risk tier)
+    //   Rejected  → 450  (maps to 'medium' risk tier)
+    const syntheticScore = result.status === 1 ? 720 : 430;
+
+    setLoanAmount(amount);
+    setCreditScore(syntheticScore);
+    setOracleResult(result);
+    setStage('terms');
+  }, []);
+
+  /** Full reset — back to the very start. */
+  const handleFullReset = useCallback(() => {
+    setStage('form');
+    setAiResult(null);
+    setLoanAmount(null);
+    setCreditScore(null);
+    setOracleResult(null);
+  }, []);
+
+  // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
     <div className="max-w-2xl mx-auto space-y-8 animate-slide-up">
+      {/* Page header */}
       <div>
-        <h1 className="text-3xl font-bold text-gradient mb-1">
-          Request a Loan
-        </h1>
-
-        <p className="text-[var(--color-text-muted)]">
-          {result
-            ? 'Your AI loan prediction is ready. Review the result below.'
-            : 'Enter your financial details to get an AI-powered loan prediction.'}
-        </p>
+        <h1 className="text-3xl font-bold text-gradient mb-1">Request a Loan</h1>
+        <p className="text-[var(--color-text-muted)]">{stageDescription}</p>
       </div>
 
-      {result ? (
-        <LoanPredictionResult result={result} onReset={handleReset} />
-      ) : (
-        <ApplicantDetailsForm
-          onPredictionReceived={handlePredictionReceived}
+      {/* Stage: AI form */}
+      {stage === 'form' && (
+        <ApplicantDetailsForm onPredictionReceived={handlePredictionReceived} />
+      )}
+
+      {/* Stage: AI result */}
+      {stage === 'ai-result' && aiResult && (
+        <AIPredictionResult
+          result={aiResult}
+          onProceed={handleProceedToOracle}
+          onReset={handleFullReset}
+        />
+      )}
+
+      {/* Stage: blockchain oracle */}
+      {stage === 'oracle' && (
+        <LoanRequestForm onScoreReceived={handleScoreReceived} />
+      )}
+
+      {/* Stage: terms + borrow */}
+      {stage === 'terms' && loanAmount !== null && creditScore !== null && (
+        <LoanTermsDisplay
+          loanAmount={loanAmount}
+          creditScore={creditScore}
+          oracleResult={oracleResult}
+          onReset={handleFullReset}
         />
       )}
     </div>
