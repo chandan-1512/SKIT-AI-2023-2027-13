@@ -2,8 +2,8 @@
  * loanConfig.js — Configurable bounds for the loan application module.
  *
  * Centralise all tunable constants here so they can be changed in one place.
- * TODO (Sprint 4): These values will be read from the smart contract instead
- * of being hard-coded — replace with on-chain reads via ethers.js.
+ * Sprint 4: These values are used for UI validation; on-chain reads can
+ * replace them once LendingPool.sol exposes getter functions.
  */
 
 /** Minimum loan amount in ETH */
@@ -28,19 +28,10 @@ export const ORACLE_STEP_AWAITING   = 1;
 export const ORACLE_STEP_RECEIVED   = 2;
 export const ORACLE_STEP_CONFIRM    = 3;
 
-/**
- * Mock oracle step delays (ms).
- * TODO (Sprint 4): Remove entirely — real oracle round-trip replaces this.
- */
-export const MOCK_STEP_DELAYS = {
-  [ORACLE_STEP_REQUESTING]: 800,  // simulates submitting the request
-  [ORACLE_STEP_AWAITING]:   1400, // simulates waiting for the off-chain oracle
-  [ORACLE_STEP_RECEIVED]:   600,  // simulates parsing the response
-};
 
 /**
  * Derive risk tier from a numeric credit score (300–850).
- * Mirrors the logic that will be returned by the real oracle in Sprint 4.
+ * Matches on-chain scoring logic.
  *
  * @param {number} score
  * @returns {'low' | 'medium' | 'high'}
@@ -53,7 +44,6 @@ export function scoreToTier(score) {
 
 /**
  * Map risk tier to required collateral ratio and annual interest rate.
- * TODO (Sprint 4): Read from smart contract ABI instead.
  *
  * @param {'low' | 'medium' | 'high'} tier
  * @returns {{ collateralRatio: number, interestRate: number }}

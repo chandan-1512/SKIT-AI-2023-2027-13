@@ -4,8 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "copy-abi": "node scripts/copy-abi.js",
+    "dev": "npm run copy-abi && vite",
+    "build": "npm run copy-abi && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
