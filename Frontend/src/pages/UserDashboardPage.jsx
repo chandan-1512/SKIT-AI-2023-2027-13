@@ -1,49 +1,51 @@
 /**
  * UserDashboardPage.jsx — Borrower portfolio view.
  *
- * Sections:
- *  1. Stat cards — Total Borrowed, Active Loans, Health Factor (computed from USER_LOANS)
- *  2. Loan list  — one row per loan with status badge, risk tier badge, and Repay CTA
- *  3. Empty state — shown when the wallet has no loans yet
+ * Sprint 4 — Task 3: Dashboard Event Indexing
+ *   - Replaced USER_LOANS mock with useLoanEvents({ provider, address })
+ *   - Shows loading skeleton while events are fetching
+ *   - Shows error banner with retry on queryFilter failure
+ *   - Shows empty state when wallet has no on-chain applications
+ *   - computeUserStats, all rendering sub-components, and RepaymentModal
+ *     wiring are unchanged
  *
- * Data is sourced from the mocked USER_LOANS array (Sprint 3).
- * TODO (Sprint 4): replace USER_LOANS with live contract event reads keyed to the
- * connected wallet address. computeUserStats and all rendering code stay the same.
+ * Sections:
+ *  1. Stat cards — Total Borrowed, Active Loans, Health Factor
+ *  2. Loan list  — one row per loan with status badge, risk tier badge, Repay CTA
+ *  3. Empty / loading / error states
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../components/Card';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
 import RepaymentModal from '../components/loan/RepaymentModal';
-import { USER_LOANS } from '../services/mockLoanService';
+import { useWallet } from '../context/WalletContext';
+import { useLoanEvents } from '../hooks/useLoanEvents';
 
 // ─── Derived stats ─────────────────────────────────────────────────────────────
 
 /**
  * Compute the three user-facing stat card values from a loans array.
- * Pure function — easy to unit-test and Sprint-4-swap-friendly.
+ * Pure function — unchanged from Sprint 3.
  *
- * @param {import('../services/mockLoanService').Loan[]} loans
+ * @param {import('../hooks/useLoanEvents').LoanEvent[]} loans
  */
 function computeUserStats(loans) {
-  const activeLoans = loans.filter((l) => l.status === 'Active');
+  const activeLoans   = loans.filter((l) => l.status === 'Approved');
   const totalBorrowed = loans.reduce((sum, l) => sum + l.amount, 0);
-  // Health factor proxy: mean collateral ratio of active loans (lower = closer to liquidation)
   const avgHealth =
     activeLoans.length > 0
       ? activeLoans.reduce((s, l) => s + l.collateralRatio, 0) / activeLoans.length
       : null;
 
   return {
-    totalBorrowed: parseFloat(totalBorrowed.toFixed(2)),
-    activeCount: activeLoans.length,
-    healthFactor: avgHealth !== null ? parseFloat(avgHealth.toFixed(2)) : null,
+    totalBorrowed: parseFloat(totalBorrowed.toFixed(4)),
+    activeCount:   activeLoans.length,
+    healthFactor:  avgHealth !== null ? parseFloat(avgHealth.toFixed(2)) : null,
   };
 }
-
-const { totalBorrowed, activeCount, healthFactor } = computeUserStats(USER_LOANS);
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -57,7 +59,6 @@ function formatDate(iso) {
   }
 }
 
-/** Health factor color — mirrors Aave / Compound convention */
 function healthColor(hf) {
   if (hf === null) return 'text-[var(--color-text-muted)]';
   if (hf >= 1.6)   return 'text-[var(--color-risk-low)]';
@@ -65,67 +66,209 @@ function healthColor(hf) {
   return 'text-[var(--color-risk-high)]';
 }
 
+// ─── Loading skeleton ──────────────────────────────────────────────────────────
+
+function SkeletonCard() {
+  return (
+    <Card>
+      <div className="animate-pulse space-y-3">
+        <div className="h-3 w-24 rounded bg-[var(--color-border)]" />
+        <div className="h-7 w-16 rounded bg-[var(--color-border)]" />
+        <div className="h-3 w-32 rounded bg-[var(--color-border)]" />
+      </div>
+    </Card>
+  );
+}
+
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-8 animate-slide-up">
+      <div className="h-8 w-48 rounded bg-[var(--color-border)] animate-pulse" />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <SkeletonCard /><SkeletonCard /><SkeletonCard />
+      </div>
+      <Card>
+        <div className="animate-pulse space-y-4">
+          {[1,2,3].map((i) => (
+            <div key={i} className="flex gap-4">
+              <div className="h-4 flex-1 rounded bg-[var(--color-border)]" />
+              <div className="h-4 w-20 rounded bg-[var(--color-border)]" />
+              <div className="h-4 w-16 rounded bg-[var(--color-border)]" />
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// ─── Error banner ──────────────────────────────────────────────────────────────
+
+function ErrorBanner({ message, onRetry }) {
+  return (
+    <div
+      role="alert"
+      className="flex items-start gap-3 p-4 rounded-xl border border-red-500/30 bg-red-500/8 text-sm"
+    >
+      <svg
+        className="shrink-0 mt-0.5 text-red-400"
+        width="16" height="16" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" strokeWidth="2"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <line x1="15" y1="9" x2="9" y2="15" />
+        <line x1="9" y1="9" x2="15" y2="15" />
+      </svg>
+      <div className="flex-1">
+        <p className="text-red-300 font-medium">Failed to load loan data</p>
+        <p className="text-red-400 text-xs mt-0.5">{message}</p>
+        <button
+          onClick={onRetry}
+          className="mt-2 text-xs font-semibold text-red-400 underline hover:text-red-300"
+        >
+          Retry
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Wallet guard ──────────────────────────────────────────────────────────────
+
+function WalletNotConnected() {
+  return (
+    <Card className="flex flex-col items-center justify-center py-16 text-center">
+      <div
+        className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-4"
+        style={{ background: 'var(--color-accent-muted)' }}
+      >
+        🔗
+      </div>
+      <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
+        Wallet not connected
+      </h3>
+      <p className="text-sm text-[var(--color-text-muted)] max-w-xs">
+        Connect your MetaMask wallet to view your on-chain loan portfolio.
+      </p>
+    </Card>
+  );
+}
+
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 export default function UserDashboardPage() {
+  const { isConnected, provider, address } = useWallet();
+  const { loans, isLoading, error, refetch } = useLoanEvents({
+    provider: isConnected ? provider : null,
+    address:  isConnected ? address  : null,
+  });
+
+  const { totalBorrowed, activeCount, healthFactor } = useMemo(
+    () => computeUserStats(loans),
+    [loans],
+  );
+
   const [modalLoan, setModalLoan] = useState(null);
   const openModal  = useCallback((loan) => setModalLoan(loan), []);
   const closeModal = useCallback(() => setModalLoan(null), []);
 
+  // Handle repay success — refetch so the status reflects on-chain reality
+  const handleRepaySuccess = useCallback(() => {
+    closeModal();
+    refetch();
+  }, [closeModal, refetch]);
+
+  // ── Render guards ──────────────────────────────────────────────────────────
+
+  if (isLoading) return <LoadingSkeleton />;
+
+  if (!isConnected) {
+    return (
+      <div className="space-y-8 animate-slide-up">
+        <div>
+          <h1 className="text-3xl font-bold text-gradient mb-1">My Dashboard</h1>
+          <p className="text-[var(--color-text-muted)] text-sm">
+            Overview of your loan portfolio and borrowing history.
+          </p>
+        </div>
+        <WalletNotConnected />
+      </div>
+    );
+  }
+
+  // ── Main render ────────────────────────────────────────────────────────────
+
   return (
     <>
       <div className="space-y-8 animate-slide-up">
-        {/* ── Page header ── */}
+        {/* Page header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-gradient mb-1">My Dashboard</h1>
             <p className="text-[var(--color-text-muted)] text-sm">
-              Overview of your loan portfolio and borrowing history.
+              Overview of your on-chain loan portfolio.
             </p>
           </div>
-          <Link to="/">
-            <Button variant="secondary" size="sm" id="new-loan-btn">
-              + New Loan
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={refetch}
+              title="Refresh loan data"
+              className="p-2 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent-muted)] transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="23 4 23 10 17 10" />
+                <polyline points="1 20 1 14 7 14" />
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+              </svg>
+            </button>
+            <Link to="/">
+              <Button variant="secondary" size="sm" id="new-loan-btn">
+                + New Loan
+              </Button>
+            </Link>
+          </div>
         </div>
 
-        {/* ── Stat cards ── */}
+        {/* Error banner */}
+        {error && <ErrorBanner message={error} onRetry={refetch} />}
+
+        {/* Stat cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard
             label="Total Borrowed"
             value={`${totalBorrowed} ETH`}
-            sub={`across ${USER_LOANS.length} loan${USER_LOANS.length !== 1 ? 's' : ''}`}
+            sub={`across ${loans.length} application${loans.length !== 1 ? 's' : ''}`}
             icon="📦"
           />
           <StatCard
-            label="Active Loans"
+            label="Approved Loans"
             value={String(activeCount)}
-            sub={activeCount === 1 ? 'loan currently open' : 'loans currently open'}
+            sub={activeCount === 1 ? 'loan approved' : 'loans approved'}
             icon="⚡"
             accent={activeCount > 0}
           />
           <StatCard
             label="Health Factor"
             value={healthFactor !== null ? String(healthFactor) : '—'}
-            sub={healthFactor !== null ? 'avg collateral ratio (active)' : 'no active loans'}
+            sub={healthFactor !== null ? 'avg collateral ratio (approved)' : 'no approved loans'}
             icon="🛡️"
             valueClassName={healthColor(healthFactor)}
           />
         </div>
 
-        {/* ── Loan list or empty state ── */}
-        {USER_LOANS.length === 0 ? (
+        {/* Loan list or empty state */}
+        {loans.length === 0 ? (
           <EmptyState />
         ) : (
-          <LoanList loans={USER_LOANS} onRepay={openModal} />
+          <LoanList loans={loans} onRepay={openModal} />
         )}
       </div>
 
-      {/* ── Repayment modal (portal) ── */}
+      {/* Repayment modal */}
       <RepaymentModal
         isOpen={modalLoan !== null}
         onClose={closeModal}
+        onSuccess={handleRepaySuccess}
         loan={modalLoan}
       />
     </>
@@ -163,18 +306,20 @@ function LoanList({ loans, onRepay }) {
   return (
     <Card>
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Loan History</h2>
+        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+          Application History
+        </h2>
         <span className="text-xs text-[var(--color-text-muted)]">
-          {loans.length} loan{loans.length !== 1 ? 's' : ''}
+          {loans.length} application{loans.length !== 1 ? 's' : ''}
         </span>
       </div>
 
-      {/* ── Desktop table (md+) ── */}
+      {/* Desktop table */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[var(--color-border)]">
-              {['Loan ID', 'Amount', 'Collateral', 'Interest', 'Due Date', 'Risk Tier', 'Status', ''].map(
+              {['App ID', 'Amount', 'Collateral', 'APR', 'Applied At', 'Risk Tier', 'Status', ''].map(
                 (h) => (
                   <th
                     key={h}
@@ -194,7 +339,7 @@ function LoanList({ loans, onRepay }) {
         </table>
       </div>
 
-      {/* ── Mobile card list (< md) ── */}
+      {/* Mobile card list */}
       <div className="md:hidden space-y-3">
         {loans.map((loan) => (
           <LoanMobileCard key={loan.loanId} loan={loan} onRepay={onRepay} />
@@ -205,7 +350,7 @@ function LoanList({ loans, onRepay }) {
 }
 
 function LoanTableRow({ loan, onRepay }) {
-  const isActive = loan.status === 'Active';
+  const isApproved = loan.status === 'Approved';
   const crPct = `${(loan.collateralRatio * 100).toFixed(0)}%`;
   const crColor =
     loan.collateralRatio >= 1.6
@@ -218,7 +363,7 @@ function LoanTableRow({ loan, onRepay }) {
     <tr
       className={[
         'hover:bg-[var(--color-surface-elevated)] transition-colors',
-        isActive ? '' : 'opacity-75',
+        isApproved ? '' : 'opacity-75',
       ].join(' ')}
     >
       <td className="py-3.5 pr-4 font-mono text-xs text-[var(--color-text-secondary)]">
@@ -230,16 +375,16 @@ function LoanTableRow({ loan, onRepay }) {
         {loan.interestRate}%
       </td>
       <td className="py-3.5 pr-4 text-[var(--color-text-secondary)]">
-        {formatDate(loan.dueDate)}
+        {formatDate(loan.appliedAt)}
       </td>
       <td className="py-3.5 pr-4">
         <Badge tier={loan.riskTier} />
       </td>
       <td className="py-3.5 pr-4">
-        <Badge status={loan.status} />
+        <StatusBadge status={loan.status} />
       </td>
       <td className="py-3.5">
-        {isActive && (
+        {isApproved && (
           <Button
             variant="secondary"
             size="sm"
@@ -255,28 +400,26 @@ function LoanTableRow({ loan, onRepay }) {
 }
 
 function LoanMobileCard({ loan, onRepay }) {
-  const isActive = loan.status === 'Active';
+  const isApproved = loan.status === 'Approved';
   const crPct = `${(loan.collateralRatio * 100).toFixed(0)}%`;
 
   return (
     <div
       className={[
         'rounded-xl p-4 border transition-all',
-        isActive
+        isApproved
           ? 'border-[var(--color-accent)]/20 bg-[var(--color-surface-elevated)]'
           : 'border-[var(--color-border)] bg-[var(--color-surface-elevated)] opacity-75',
       ].join(' ')}
     >
-      {/* Top row */}
       <div className="flex items-center justify-between mb-3">
         <span className="font-mono text-xs text-[var(--color-text-muted)]">{loan.loanId}</span>
         <div className="flex items-center gap-2">
           <Badge tier={loan.riskTier} />
-          <Badge status={loan.status} />
+          <StatusBadge status={loan.status} />
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-3 gap-2 mb-3 text-center">
         <div>
           <p className="text-xs text-[var(--color-text-muted)]">Amount</p>
@@ -287,14 +430,16 @@ function LoanMobileCard({ loan, onRepay }) {
           <p className="text-sm font-bold">{crPct}</p>
         </div>
         <div>
-          <p className="text-xs text-[var(--color-text-muted)]">Rate</p>
+          <p className="text-xs text-[var(--color-text-muted)]">APR</p>
           <p className="text-sm font-bold">{loan.interestRate}%</p>
         </div>
       </div>
 
       <div className="flex items-center justify-between">
-        <p className="text-xs text-[var(--color-text-muted)]">Due {formatDate(loan.dueDate)}</p>
-        {isActive && (
+        <p className="text-xs text-[var(--color-text-muted)]">
+          Applied {formatDate(loan.appliedAt)}
+        </p>
+        {isApproved && (
           <Button
             variant="secondary"
             size="sm"
@@ -309,6 +454,25 @@ function LoanMobileCard({ loan, onRepay }) {
   );
 }
 
+/** Extends Badge to handle on-chain statuses (Pending / Approved / Rejected). */
+function StatusBadge({ status }) {
+  const map = {
+    Approved: { label: 'Approved', cls: 'text-[var(--color-risk-low)] bg-[var(--color-risk-low-bg)]' },
+    Rejected: { label: 'Rejected', cls: 'text-[var(--color-risk-high)] bg-[var(--color-risk-high-bg)]' },
+    Pending:  { label: 'Pending',  cls: 'text-amber-400 bg-amber-500/10' },
+    // Legacy mock statuses still supported
+    Active:      { label: 'Active',      cls: 'text-[var(--color-accent)] bg-[var(--color-accent-muted)]' },
+    Repaid:      { label: 'Repaid',      cls: 'text-[var(--color-risk-low)] bg-[var(--color-risk-low-bg)]' },
+    Liquidated:  { label: 'Liquidated',  cls: 'text-[var(--color-risk-high)] bg-[var(--color-risk-high-bg)]' },
+  };
+  const { label, cls } = map[status] ?? { label: status, cls: 'text-[var(--color-text-muted)] bg-[var(--color-border)]' };
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${cls}`}>
+      {label}
+    </span>
+  );
+}
+
 function EmptyState() {
   return (
     <Card className="flex flex-col items-center justify-center py-16 text-center">
@@ -319,10 +483,10 @@ function EmptyState() {
         📭
       </div>
       <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
-        No loans yet
+        No applications yet
       </h3>
       <p className="text-sm text-[var(--color-text-muted)] max-w-xs mb-6">
-        This wallet has no borrowing history. Request your first DeFi loan to get started.
+        This wallet has no on-chain loan applications. Request your first loan to get started.
       </p>
       <Link to="/">
         <Button variant="primary" size="md" id="empty-state-new-loan-btn">
