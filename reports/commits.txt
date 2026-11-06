@@ -1,0 +1,124 @@
+b8b7d9a2cfa50639f34d9d77d6746574f6b7bd90|github-actions[bot]|2026-10-29 22:54:21 +0000|docs: archive Form-3 weekly progress report [skip ci]
+b77e6b3cbdbfd4a386540364d81a31b838725ee5|Akash Sharma|2026-10-29 23:57:40 +0530|Merge pull request #20 from chandan-1512/Akash-Sharma
+54603fc38758a3004b806334fbe62c43999a99a6|Akash Sharma|2026-10-29 23:52:17 +0530|Merge pull request #19 from chandan-1512/Akash/US4-week1-web3-preparation
+9ca508325d8e024a5a1badf15a694b7c5433e556|Akash Sharma|2026-10-29 23:38:42 +0530|Document Web3 integration and add verification script
+6506a94d78c4f092163708dada82275d48a90ffd|Akash Sharma|2026-10-29 23:37:48 +0530|Add tests for blockchain service
+525380dd8ad4f849ad530127490af8c52ba081fd|Akash Sharma|2026-10-29 23:36:43 +0530|Add service to read loan data from Sepolia
+5b0135d0f421b5e8ccfa74160211507ee606b9bc|Akash Sharma|2026-10-29 23:35:47 +0530|Add Web3.js dependency for blockchain integration
+a6399a0203633e6cb52f4b0af495edaf3e2cbc4d|Akash Sharma|2026-10-29 21:38:52 +0530|Merge remote-tracking branch 'origin/Akash-Sharma' into Akash/US4-week1-web3-preparation
+14ce8f62a74a86b7f30048ab93d875b710ddf204|Ajay Singh Rathore|2026-10-29 18:24:01 +0530|Merge pull request #18 from chandan-1512/backend-metamask-integration
+a49bc6eb478e7fde7043032c237245fa03646be4|Ajay Singh Rathore|2026-10-29 18:18:27 +0530|integrate backend API and MetaMask
+2301c6b2da0712197706b069ea0b687e47ab8caa|chandan-1512|2026-10-29 09:39:06 +0530|Merge branch 'chandan-backend'
+6078432ca5ba70e1020a5826af4a773bf83a6ac8|chandan-1512|2026-10-29 09:35:34 +0530|Add loan rejection and response schema validation tests
+0d60210fe09352daf419efdd3d6cc36f855ca615|chandan-1512|2026-10-27 20:06:59 +0530|Expand automated API regression and boundary validation coverage
+5fe9bad2e3c4b21e4795a49622305ae585f0f9ae|chandan-1512|2026-10-26 09:27:20 +0530|Add automated API validation and regression tests
+b6ded2308155a512b7bef49e0cbb81b0561105b7|chandan-1512|2026-10-25 19:34:13 +0530|Enhance API validation, prediction pipeline, and model evaluation artifacts
+0260add19080766c64089d8a181836ae7fcb0614|Ajay Singh Rathore|2026-10-23 21:23:24 +0530|Merge pull request #17 from chandan-1512/backend-metamask-integration
+bb7282086db142e6a635f0db4a7b870a32fe4790|Ajay Singh Rathore|2026-10-23 21:19:59 +0530|Backend API and MetaMask integration
+55144742c2fc40b2292033d9684ff83485205f78|github-actions[bot]|2026-10-22 21:51:10 +0000|docs: archive Form-3 weekly progress report [skip ci]
+770f1dcc9f1c9858833f4217ae516899e87e4569|Akash Sharma|2026-10-23 01:57:33 +0530|Merge pull request #16 from chandan-1512/Akash-Sharma
+07d8a389b78e1ba0258d076388207aa3ecbbe35c|chandan-1512|2026-10-22 13:36:17 +0530|Merge branch 'chandan-backend' Merge chandan-backend into main
+b0d48bae3e63a681dbbd32a0ef7bae68bedd9d3b|chandan-1512|2026-10-22 13:33:35 +0530|Update frontend loan prediction integration
+161948d609da318b0d29ef8cbdb828db83910a1c|chandan-1512|2026-10-22 13:28:06 +0530|Backend frontend integration updates
+838170ed991d8d96469df0bfd0002f927b0fd489|Akash Sharma|2026-10-21 23:16:57 +0530|docs: prepare US4 Web3 integration
+eb740914e4a267faea2e7638be28f189eff4e739|Akash Sharma|2026-10-21 00:04:06 +0530|Merge pull request #15 from chandan-1512/Akash/US3-week4-final-validation
+6979399e837bf99eed029f17e3b89a6ceae44cb6|Akash Sharma|2026-10-20 23:58:45 +0530|Document Week 4 Sepolia event logging
+296266b14ff5f40e51640e84de142e3eca75b5f2|Akash Sharma|2026-10-20 23:54:50 +0530|Add Sepolia historical and live event logger
+98083b521d243a385e058c85d9f20dc97e30f256|github-actions[bot]|2026-10-15 21:38:07 +0000|docs: archive Form-3 weekly progress report [skip ci]
+1e319ea416864358cbee0ec229195f824a253621|Akash Sharma|2026-10-15 17:40:49 +0530|Merge pull request #14 from chandan-1512/Akash-Sharma
+9111a8d88bb7e97597748da73b53de031225696a|Akash Sharma|2026-10-15 17:38:59 +0530|Merge pull request #13 from chandan-1512/Akash/US3-week3-network-integration
+8aa12e6d17c871a330b8c348af87611908877bbd|Akash Sharma|2026-10-15 17:33:56 +0530|Strengthen Sepolia transaction event verification
+59eb87a71161c1a6428bf0b96a49be8e47fd3826|chandan-1512|2026-10-15 10:08:37 +0530|Merge pull request #12 from chandan-1512/chandan-backend
+0a82ee0b3a110976c4c71b21be9ee525ef2873e5|chandan-1512|2026-10-15 09:56:54 +0530|Test empty loan application list response
+6801f489cc16a0a873f069f5d1f3db311f8c9080|Akash Sharma|2026-10-14 23:12:34 +0530|Complete US3 Week 3 Sepolia event validation
+282fb6ac67985368c3046cc463a864be1975b586|chandan-1512|2026-10-14 12:27:18 +0530|Add API failure and response validation tests
+aa953359cbcb55f1276d419563fd1574e9166d00|Akash Sharma|2026-10-13 14:19:01 +0530|Merge US3 Week 2 Sepolia deployment into Akash-Sharma
+f34de6c2e1f555d342aca5935fed2298dddd81a3|chandan-1512|2026-10-13 13:33:44 +0530|Add API validation and automated backend tests
+b1203f02122deabc83c921e128d8b1cce7d24a5b|github-actions[bot]|2026-10-08 23:30:23 +0000|docs: archive Form-3 weekly progress report [skip ci]
+a2f6de74bcd9b3b746529217f9fe4eb60fd57b04|Akash Sharma|2026-10-08 14:51:10 +0530|Merge pull request #11 from chandan-1512/US3-week2-sepolia-deployment
+75bf01e6905ea03ed3d2a7fb20aff32af6525e94|Akash Sharma|2026-10-08 14:34:42 +0530|docs: update blockchain module README
+14aacd057458c7d16142c42c3ba04df9ebd4baae|Akash Sharma|2026-10-08 13:52:27 +0530|docs: add final Sepolia status validation
+382e1dc4df186798c4fca16db8c56d844ade0f7a|Akash Sharma|2026-10-08 13:48:44 +0530|docs: record Sepolia contract interaction validation
+d53c976cc58177697d506305948a50c70f39b88d|Akash Sharma|2026-10-08 13:40:51 +0530|Merge pull request #10 from chandan-1512/US3-week1-sepolia-preparation
+c4281a3c07f0e066e5f35e963d8f929fcb2a4031|Akash Sharma|2026-10-08 13:30:01 +0530|docs: add Sepolia deployment record
+86227e37aa8212a4967f256383345d04fc61647a|chandan-1512|2026-10-08 10:11:12 +0530|Add API validation and loan status endpoints
+c4a7349e9b6bee7b97b57ddc95244ff0cb479eff|Akash Sharma|2026-10-08 00:59:03 +0530|Complete Sepolia deployment preparation
+941eece78598f94a437d286da3690bb40191678f|Akash Sharma|2026-10-08 00:45:40 +0530|Configure Hardhat for Sepolia deployment
+9520b2c667ca00f048eb93157354bfef5c6ee66a|chandan-1512|2026-10-07 12:56:39 +0530|Implement REST API and database integration
+136e1991d6eca916a07526ad1af55a5d8cb59816|chandan-1512|2026-10-06 10:00:35 +0530|Complete AI model development
+6dd2ad3c267c9f854e0d55e77ddac97766949535|chandan-1512|2026-10-06 10:00:35 +0530|Complete AI model development
+243d4c9c81a3d628c88e7eedb80b4d94621f5252|github-actions[bot]|2026-10-01 22:50:03 +0000|docs: archive Form-3 weekly progress report [skip ci]
+e19befed23d1a52baf287828e940997f09be1908|Ajay Singh Rathore|2026-09-30 11:45:29 +0530|Merge pull request #9 from chandan-1512/user-admin-dashboard
+6b17aea6e3bd32dde6401488f897f56de0228011|Ajay Singh Rathore|2026-09-30 11:43:22 +0530|Unit Tests
+cdb9b3619df31beddc7bfc8a65bff495480fa4f3|Ajay Singh Rathore|2026-09-29 20:41:02 +0530|Admin Dashboard
+3e85d4a31183e882396e5056a1dd674b59c3fb36|Ajay Singh Rathore|2026-09-29 20:31:00 +0530|Merge branch 'main' of https://github.com/chandan-1512/SKIT-AI-2023-2027-13 into user-admin-dashboard
+a2e9afa53344325536c8c1fe87a62d1904de9aa0|Akash Sharma|2026-09-28 00:00:19 +0530|Merge pull request #8 from chandan-1512/week-4-decision-final-testing
+eac2e1a22629dcd7a7da4868f300865f15b182ee|Akash Sharma|2026-09-25 05:10:45 +0530|Finalize loan approval smart contract workflow
+d09a26b0c09dfd9d1e16cef81eac9367338faacf|Akash Sharma|2026-09-25 04:55:25 +0530|Test duplicate decision after approval
+77148bddc0baec754318692a04b241b5e494c56e|Akash Sharma|2026-09-25 04:53:35 +0530|Test duplicate decision after rejection
+d4047ecb06356689ec51f93c17e567eb34fde137|github-actions[bot]|2026-09-24 21:41:43 +0000|docs: archive Form-3 weekly progress report [skip ci]
+e8b42825f945b7a4a28072cee351a92f80e8d423|Akash Sharma|2026-09-22 14:36:19 +0530|Test final approval and rejection workflow
+3d4fe4af3ad66ecbc7020d9ff23188c90e0fbba1|Akash Sharma|2026-09-22 14:33:24 +0530|Test application state after unauthorized decision
+ff8525b04eb58ddcaed0dd13e8099378b89a6cfe|Akash Sharma|2026-09-22 14:30:39 +0530|Test decision maker assignment
+39fc5f208dc1a5afcb7fbc3ce60bdf72693adad5|Akash Sharma|2026-09-22 14:24:04 +0530|Restrict loan decisions to authorized account
+b16df3555240bbaa21ec1eea64727abec3074eaf|Ajay Singh Rathore|2026-09-21 10:47:41 +0530|Add dashboard functionality
+4de710e1224be4c32061650fdf6e84c1c931e477|chandan-1512|2026-09-20 22:09:06 +0530|updated YML workflow
+29cf0b23a000864915a9729e1c40c6c2ea4e6fda|github-actions[bot]|2026-09-20 16:08:00 +0000|docs: archive Form-3 weekly progress report [skip ci]
+1dd9074014d5169b907a602614cd0b2f551d97f2|chandan-1512|2026-09-20 21:29:45 +0530|Enhance weekly report workflow with concurrency and rebase
+10dfd95ba0c7451a33317a084a1fd187d1d64071|Ajay Singh Rathore|2026-09-20 19:04:23 +0530|Merge pull request #7 from chandan-1512/user-admin-dashboard
+e4f51e68511b0a650ece5ee0384c50b1c71a8610|Ajay Singh Rathore|2026-09-20 18:59:34 +0530|Add user and admin dashboards
+b4ed986e0b94c0a8c740ec3fe15b3d849b19b302|chandan-1512|2026-09-19 22:30:51 +0530|Merge branch 'model-devlopment-2'
+7e266248046ef14b6e932015d5788449ccbae3c7|Akash Sharma|2026-09-18 11:37:11 +0530|Merge pull request #6 from chandan-1512/week-3-application-management
+4cfa6ea56481421108eb4934b6f847d7204a2c0e|Akash Sharma|2026-09-18 11:33:22 +0530|Add end-to-end application management tests
+59ae5c23775f1a83ec467edd96e376276851126f|Akash Sharma|2026-09-18 11:11:15 +0530|Validate applicant address for application history
+2c9342fbca8ecb0b529964fc46775cbcb95a56ee|github-actions[bot]|2026-09-17 21:36:34 +0000|docs: archive Form-3 weekly progress report [skip ci]
+4f95d5d4c09e2fc7393e517f770bc93abd52f7f5|Akash Sharma|2026-09-16 22:37:16 +0530|Add applicant-specific loan retrieval
+3aeb781a77eded9b2b954da70bae2793fc471e0d|chandan-1512|2026-09-16 21:56:52 +0530|Complete  model comparison on new dataset
+da1c0525828ddf7b37ed8d156dd6487ee0f87d92|Akash Sharma|2026-09-15 23:06:40 +0530|Harden loan application lifecycle validation
+7e7d10f92f64c13fef313536b03d8b780938a6a1|Akash Sharma|2026-09-15 23:00:46 +0530|Emit loan application status update event
+4cb55146ee530b8856df93b7b7254fe100b34e7f|chandan-1512|2026-09-15 17:12:52 +0530|Evaluate decision tree and random forest on 70k dataset
+1da5079f68064002a7d9700d791cbeaf07328051|Akash Sharma|2026-09-13 23:15:36 +0530|Add loan application status getter
+90582eef8ff86811e2b8d1b5d7fa3bbebfb19e0f|Akash Sharma|2026-09-13 22:43:01 +0530|Synchronize loan application status with decision
+9777a992563fd6beeeb1c1f1378262a775c27581|chandan-1512|2026-09-13 17:49:14 +0530|Update preprocessing and logistic regression for new dataset
+19375a034e5181728c58ded79a1aa857e9210c78|chandan-1512|2026-09-11 16:13:16 +0530|Update model evaluation report
+1c1d672b5a76ad09a7f51a621455f68d46ca9d15|github-actions[bot]|2026-09-10 21:05:06 +0000|docs: archive Form-3 weekly progress report [skip ci]
+7676ac5b074457b5ccf54138124d1e4fd8e7af66|Ajay Singh Rathore|2026-09-10 20:22:33 +0530|Merge pull request #5 from chandan-1512/auth-layer
+d511f1d8a67439a61209d157ac1c17c967006e25|Ajay Singh Rathore|2026-09-10 20:20:09 +0530|loan application module and testing
+5c6135aee683622f5d09951fa0013519c3980d37|Ajay Singh Rathore|2026-09-10 20:10:38 +0530|Merge branch 'main' of https://github.com/chandan-1512/SKIT-AI-2023-2027-13 into auth-layer # Please enter a commit message to explain why this merge is necessary, # especially if it merges an updated upstream into a topic branch. # # Lines starting with '#' will be ignored, and an empty message aborts # the commit.
+6388c4f1a264606ede801ed47665b4ebe391a557|chandan-1512|2026-09-10 17:50:44 +0530|Merge branch 'main' of https://github.com/chandan-1512/SKIT-AI-2023-2027-13 into data-preprocessing-and-model-training
+a7b9ae9d39c8f7c49279a27c4c2d3020f4bea353|Ajay Singh Rathore|2026-09-09 21:09:51 +0530|Auth Layer
+4674fb2593d23fd8b475f81fa559d296c1840e31|Akash Sharma|2026-09-09 19:01:19 +0530|Merge pull request #4 from chandan-1512/week-2-loan-application-registration
+049aba748790d0e4c2872a14a98d36bbac27a9ce|Akash Sharma|2026-09-09 18:39:59 +0530|Add applicant loan application tracking
+1185ad2995830565bc6cb8ebe2351e8557ee63db|chandan-1512|2026-09-09 18:34:11 +0530|Add XGBoost prediction pipeline and model testing
+466bf4b62a90166de314667361db4b31dd6d537a|Akash Sharma|2026-09-09 18:31:25 +0530|Add loan application edge case tests
+f4c66a424405c8a94b4857b4c685015ea9fad2da|Akash Sharma|2026-09-09 18:26:50 +0530|Implement loan application registration
+919eda7590b569df2174cdc07aed5c0bdeca350d|github-actions[bot]|2026-09-09 05:10:04 +0000|docs: archive Form-3 weekly progress report [skip ci]
+410ec7d26d44061217065e14529a954be7793964|github-actions[bot]|2026-09-09 05:03:03 +0000|docs: archive Form-3 weekly progress report [skip ci]
+e95e3789b67ead02361f21191248caf2ea2f9f97|chandan-1512|2026-09-08 17:51:22 +0530|Complete model evaluation and XGBoost validation
+4287918602347a05eb29d29b923eb367bbb4b3c4|chandan-1512|2026-09-06 18:08:19 +0530|Add Random Forest XGBoost and model comparison report
+e017e7f231e89b124ae883fc93602d8911cd515b|github-actions[bot]|2026-09-03 21:13:15 +0000|docs: archive Form-3 weekly progress report [skip ci]
+1fcbb4ed68bdb1d0e0122a5a8ff5da8c1395e29a|Ajay Singh Rathore|2026-09-03 21:21:24 +0530|Merge pull request #3 from chandan-1512/react-ui-setup
+b6ba8aebbe716ccbba21f2b299798c9340c69e2a|Ajay Singh Rathore|2026-09-03 21:11:47 +0530|React project setup and UI component development
+d9ebb7d3ed8c910c96207405b8e5e5263013e138|Akash Sharma|2026-09-03 19:21:34 +0530|Merge pull request #2 from chandan-1512/feature/develop-loan-approval-functions
+e5fb14c99f72a18d48341e158b10650dc73e2dd9|Akash Sharma|2026-09-03 19:15:18 +0530|Merge pull request #1 from chandan-1512/feature/develop-smart-contract-skeleton
+c6da8182a55a70f5631e5366f647d59576b65f93|Akash Sharma|2026-09-03 19:03:10 +0530|Add loan application data model
+df39e20e9ed9938a09abbbeb66d747ef97306f9a|chandan-1512|2026-09-03 17:52:35 +0530|Add Decision Tree model
+25397a24a783be4377b4a231458853edd0579ed3|chandan-1512|2026-09-03 17:17:13 +0530|Merge branch 'main' of https://github.com/chandan-1512/SKIT-AI-2023-2027-13
+38b18b103881543b758a89c38d7a9c42e9223062|Akash Sharma|2026-09-03 12:03:22 +0530|Add smart contract deployment test
+8b2db5d95bac0f42d236f75f3c2663de0083f8d8|Akash Sharma|2026-09-03 11:34:29 +0530|Implement loan decision registry smart contract
+476bf1c018e8f4638a02d93309302e8d6bcea5b6|Akash Sharma|2026-09-03 11:30:29 +0530|Configure Hardhat development environment
+2ad3d7a7bc79d63561732e4ca0b377573dcab3e0|github-actions[bot]|2026-09-02 12:05:07 +0000|docs: archive Form-3 weekly progress report [skip ci]
+22edfd4249bb83d0cdeec886a3ecd3a9b04fac51|chandan-1512|2026-09-02 17:10:38 +0530|Add logistic regression baseline model
+7ff6d5d93d00fa0fab695cc9be6eaf2530d5a8ac|Akash Sharma|2026-09-02 01:45:22 +0530|Set up blockchain environment and install ethers
+5e77454651c77dfb1df51cef131ec098a7aa3fec|chandan-1512|2026-09-01 18:13:31 +0530|Setup loan data preprocessing and PostgreSQL connection
+1f8f577a193cb006de784021a5b0b343f83ed643|chandan-1512|2026-08-31 18:39:50 +0530|Setup FastAPI backend
+bc33b6257e18d950079270f9a0c124ea132540fa|chandan-1512|2026-08-31 18:01:03 +0530|Fix project folder structure
+729f09a186e43f119baf1f3b255d55f17d818583|chandan-1512|2026-08-31 17:35:25 +0530|Create Blockchain folder
+0771c1880d3528535c36141e5d35032cf2d74b29|chandan-1512|2026-08-31 17:34:59 +0530|Create Backend
+79dfcf7cc85148acdf42a7d00337e4dd7ecbebfb|chandan-1512|2026-08-31 17:34:35 +0530|create frontend folder
+a92bacb891856ce55bd6690792798da3663a8bc7|chandan-1512|2026-08-31 11:54:52 +0000|Added report generation script
+23ffb50dc642feb3331130e4a2793bbc22731f47|chandan-1512|2026-08-31 17:22:38 +0530|auto_weekly_report.yml
+bed0d05fa50e7d0d6e7ea95a13f363c3629dc664|chandan-1512|2026-08-31 17:16:56 +0530|Create auto_weekly_report.yml
+de44f118f99bb33c6d25d5cdaa1bcfb1a85d458e|chandan-1512|2026-08-31 17:04:35 +0530|Create generate_report.py
+001c3a6fa1902f2dd4c2d5e0ace60e5480251280|chandan-1512|2026-08-31 16:46:34 +0530|Create .gitkeep
+6c43d88ef8aabb4097302c20a9dcc54be8397210|chandan-1512|2026-08-31 16:17:33 +0530|Initial commit
