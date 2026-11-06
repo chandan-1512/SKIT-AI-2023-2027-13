@@ -843,3 +843,88 @@ def test_response_schema_rejects_mismatched_decision():
         assert False, "Mismatched decision should be rejected"
     except ValidationError:
         pass
+
+def test_predict_borderline_probability():
+    payload = {
+        "person_age": 30,
+        "person_gender": "Male",
+        "person_education": "Bachelor",
+        "person_income": 72000,
+        "person_emp_exp": 6,
+        "person_home_ownership": "RENT",
+        "loan_amnt": 12000,
+        "loan_intent": "PERSONAL",
+        "loan_int_rate": 11.5,
+        "loan_percent_income": 12000 / 72000,
+        "cb_person_cred_hist_length": 6,
+        "credit_score": 710,
+        "previous_loan_defaults_on_file": "No"
+    }
+
+    mock_db = MagicMock()
+
+    def override_get_db():
+        yield mock_db
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    try:
+        with patch("main.predict_loan", return_value=(0, 0.19, 8)):
+            response = client.post("/predict", json=payload)
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["prediction"] == 0
+    assert data["decision"] == "Loan Rejected"
+    assert data["probability"] == 0.19
+    assert data["capability_score"] == 8
+
+    mock_db.add.assert_called_once()
+    mock_db.commit.assert_called_once()
+
+import pytest
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("person_age", 0),
+        ("person_age", -1),
+        ("person_income", 0),
+        ("person_income", -1000),
+        ("person_emp_exp", -1),
+        ("loan_amnt", 0),
+        ("loan_amnt", -5000),
+        ("loan_int_rate", 0),
+        ("loan_int_rate", -2),
+        ("loan_percent_income", -0.1),
+        ("loan_percent_income", 1.1),
+        ("cb_person_cred_hist_length", -1),
+        ("credit_score", 299),
+        ("credit_score", 851),
+    ]
+)
+def test_invalid_numeric_inputs(field, value):
+    payload = {
+        "person_age": 30,
+        "person_gender": "Male",
+        "person_education": "Bachelor",
+        "person_income": 60000,
+        "person_emp_exp": 3,
+        "person_home_ownership": "RENT",
+        "loan_amnt": 10000,
+        "loan_intent": "EDUCATION",
+        "loan_int_rate": 10.5,
+        "loan_percent_income": 10000 / 60000,
+        "cb_person_cred_hist_length": 4,
+        "credit_score": 720,
+        "previous_loan_defaults_on_file": "No"
+    }
+
+    payload[field] = value
+
+    response = client.post("/predict", json=payload)
+
+    assert response.status_code == 422
+
