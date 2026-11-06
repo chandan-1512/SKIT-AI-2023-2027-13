@@ -1,12 +1,27 @@
 
-from fastapi import FastAPI, Depends, HTTPException
+import logging
 
+from fastapi import FastAPI, Depends, HTTPException
 from typing import Literal
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field, model_validator
+
 from model.predict import predict_loan
 from app.database import SessionLocal
 from app.models import LoanApplication as LoanApplicationDB
+
+
+# Logging configuration
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("backend.log"),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(__name__)
 
 
 app = FastAPI(
@@ -28,6 +43,8 @@ def get_db():
 # Health check
 @app.get("/")
 def home():
+    logger.info("Health check endpoint accessed")
+
     return {
         "message": "Backend is running successfully"
     }
@@ -46,9 +63,12 @@ class LoanPredictionResponse(BaseModel):
             if self.prediction == 1
             else "Loan Rejected"
         )
+
         if self.decision != expected:
             raise ValueError("Decision does not match prediction")
+
         return self
+
 
 # Loan application request schema
 class LoanApplication(BaseModel):
@@ -90,6 +110,7 @@ class LoanApplication(BaseModel):
     credit_score: int = Field(ge=300, le=850)
 
     previous_loan_defaults_on_file: Literal["Yes", "No"]
+
     @model_validator(mode="after")
     def validate_loan_percent_income(self):
         expected_ratio = self.loan_amnt / self.person_income
@@ -116,7 +137,10 @@ def predict(
         prediction, probability, capability_score = predict_loan(
             applicant_data
         )
+
     except Exception:
+        logger.exception("Loan prediction failed")
+
         raise HTTPException(
             status_code=500,
             detail="Loan prediction failed"
@@ -127,6 +151,14 @@ def predict(
         decision = "Loan Approved"
     else:
         decision = "Loan Rejected"
+
+    # Log prediction result
+    logger.info(
+        "Prediction completed | Decision: %s | Probability: %.4f | Capability Score: %s",
+        decision,
+        probability,
+        capability_score
+    )
 
     # Prepare database record
     db_application = LoanApplicationDB(
@@ -142,8 +174,13 @@ def predict(
         db.commit()
         db.refresh(db_application)
 
+        logger.info("Loan application saved successfully")
+
     except Exception:
+        logger.exception("Failed to save loan application")
+
         db.rollback()
+
         raise HTTPException(
             status_code=500,
             detail="Failed to save loan application"
@@ -169,6 +206,11 @@ def loan_status(
     ).first()
 
     if application is None:
+        logger.warning(
+            "Loan application not found | ID: %s",
+            application_id
+        )
+
         raise HTTPException(
             status_code=404,
             detail="Loan application not found"
@@ -188,6 +230,11 @@ def get_all_applications(
     db: Session = Depends(get_db)
 ):
     applications = db.query(LoanApplicationDB).all()
+
+    logger.info(
+        "Loan applications retrieved | Count: %s",
+        len(applications)
+    )
 
     return [
         {
