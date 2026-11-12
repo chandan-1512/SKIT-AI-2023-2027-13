@@ -4,9 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-  "test": "node --test services/blockchainService.test.js",
-  "verify:sepolia": "node services/verifySepolia.js"
-},
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test services/blockchainService.test.js",
+    "verify:sepolia": "node services/verifySepolia.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -14,6 +16,7 @@
   "dependencies": {
     "dotenv": "^18.0.6",
     "ethers": "^6.17.0",
+    "express": "^5.3.0",
     "web3": "^4.16.0"
   },
   "devDependencies": {
