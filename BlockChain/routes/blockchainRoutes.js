@@ -9,10 +9,10 @@ import {
   getApplicantApplications,
   validateApplicationId,
   validateAddress,
+  recordApplicationDecision,
 } from "../services/blockchainService.js";
 
 const router = express.Router();
-
 
 // --------------------------------------------------
 // COMMON ERROR HANDLER
@@ -167,6 +167,76 @@ router.get(
   }
 );
 
+// --------------------------------------------------
+// RECORD AI DECISION ON BLOCKCHAIN
+// --------------------------------------------------
+
+router.post("/applications/:applicationId/decision", async (req, res) => {
+  try {
+    // Internal API authentication
+    const apiKey = req.headers["x-api-key"];
+
+    if (
+      !process.env.BLOCKCHAIN_API_SECRET ||
+      apiKey !== process.env.BLOCKCHAIN_API_SECRET
+    ) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized API request.",
+      });
+    }
+
+    const applicationId = validateApplicationId(
+      req.params.applicationId
+    );
+
+    const { prediction } = req.body;
+
+    if (prediction !== 0 && prediction !== 1) {
+      return res.status(400).json({
+        success: false,
+        message: "Prediction must be 0 (Rejected) or 1 (Approved).",
+      });
+    }
+
+    const result = await recordApplicationDecision(
+      applicationId,
+      prediction
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "AI decision successfully verified on blockchain.",
+      data: result,
+    });
+
+  } catch (error) {
+    console.error("Decision recording failed:", error);
+
+    if (error.message.includes("does not exist")) {
+      return res.status(404).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    if (
+      error.message.includes("already has a different") ||
+      error.message.includes("not the authorized")
+    ) {
+      return res.status(409).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(502).json({
+      success: false,
+      message: "Unable to record AI decision on blockchain.",
+      error: error.message,
+    });
+  }
+});
 
 // --------------------------------------------------
 // API ROUTER EXPORT
