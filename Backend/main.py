@@ -1,7 +1,7 @@
 
 import logging
 
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Query
 from typing import Literal
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field, model_validator
@@ -129,7 +129,6 @@ def predict(
     application: LoanApplication,
     db: Session = Depends(get_db)
 ):
-    # Convert API input into dictionary
     applicant_data = application.model_dump()
 
     # Run trained ML model
@@ -186,7 +185,6 @@ def predict(
             detail="Failed to save loan application"
         )
 
-    # Return prediction result
     return {
         "prediction": int(prediction),
         "decision": decision,
@@ -224,16 +222,26 @@ def loan_status(
     }
 
 
-# Retrieve all loan applications
+# Retrieve loan applications with pagination
 @app.get("/loan-applications")
 def get_all_applications(
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db)
 ):
-    applications = db.query(LoanApplicationDB).all()
+    applications = (
+        db.query(LoanApplicationDB)
+        .order_by(LoanApplicationDB.id.asc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
 
     logger.info(
-        "Loan applications retrieved | Count: %s",
-        len(applications)
+        "Loan applications retrieved | Count: %s | Limit: %s | Offset: %s",
+        len(applications),
+        limit,
+        offset
     )
 
     return [
