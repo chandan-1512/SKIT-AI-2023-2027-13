@@ -82,17 +82,20 @@ def predict_loan(applicant_data):
     if previous_default == "No":
         capability_score += 2
 
-    # Final decision policy
-    # Approval requires both score and model probability
-    if capability_score >= 5 and probability >= 0.20:
+    # Final hybrid decision policy
+    APPROVAL_THRESHOLD = 0.20
+
+    if capability_score >= 5 and probability >= APPROVAL_THRESHOLD:
         prediction = 1
     else:
         prediction = 0
 
+    # Debug logs
     print("Model probabilities:", probabilities)
     print("Model prediction:", model_prediction)
     print("Capability score:", capability_score)
     print("Approval probability:", round(probability, 4))
+    print("Approval threshold:", APPROVAL_THRESHOLD)
     print("Final prediction:", prediction)
 
     return prediction, probability, capability_score
