@@ -928,3 +928,75 @@ def test_invalid_numeric_inputs(field, value):
 
     assert response.status_code == 422
 
+
+def test_loan_applications_default_pagination():
+    mock_db = MagicMock()
+    mock_db.query.return_value.order_by.return_value.offset.return_value.limit.return_value.all.return_value = []
+
+    def override_get_db():
+        yield mock_db
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    try:
+        response = client.get("/loan-applications")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    mock_db.query.return_value.order_by.return_value.offset.assert_called_once_with(0)
+    mock_db.query.return_value.order_by.return_value.offset.return_value.limit.assert_called_once_with(100)
+
+
+def test_loan_applications_custom_limit():
+    mock_db = MagicMock()
+    mock_db.query.return_value.order_by.return_value.offset.return_value.limit.return_value.all.return_value = []
+
+    def override_get_db():
+        yield mock_db
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    try:
+        response = client.get("/loan-applications?limit=10")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    mock_db.query.return_value.order_by.return_value.offset.return_value.limit.assert_called_once_with(10)
+
+
+def test_loan_applications_custom_offset():
+    mock_db = MagicMock()
+    mock_db.query.return_value.order_by.return_value.offset.return_value.limit.return_value.all.return_value = []
+
+    def override_get_db():
+        yield mock_db
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    try:
+        response = client.get("/loan-applications?limit=10&offset=20")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+
+    query = mock_db.query.return_value.order_by.return_value
+
+    query.offset.assert_called_once_with(20)
+    query.offset.return_value.limit.assert_called_once_with(10)
+
+
+def test_loan_applications_invalid_limit():
+    response = client.get("/loan-applications?limit=600")
+
+    assert response.status_code == 422
+
+
+def test_loan_applications_invalid_offset():
+    response = client.get("/loan-applications?offset=-1")
+
+    assert response.status_code == 422
+
+
