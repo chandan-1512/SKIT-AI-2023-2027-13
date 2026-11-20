@@ -7,7 +7,9 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "test": "node --test services/blockchainService.test.js",
-    "verify:sepolia": "node services/verifySepolia.js"
+    "verify:sepolia": "node services/verifySepolia.js",
+    "check:decision-maker": "node scripts/checkDecisionMaker.js",
+    "create:test-application": "node scripts/createTestApplication.js"
   },
   "keywords": [],
   "author": "",
