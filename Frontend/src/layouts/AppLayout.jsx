@@ -1,9 +1,12 @@
 import { Outlet } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import { ToastContainer } from '../context/ToastContext';
 
 /**
- * AppLayout — shared shell for all routes.
- * Contains the Navbar + a max-width constrained page container.
+ * AppLayout — shared shell for all protected routes.
+ *
+ * Sprint 4 — Task 4: Added ToastContainer so toast notifications render
+ * above all page content inside the protected route tree.
  */
 export default function AppLayout() {
   return (
@@ -15,10 +18,13 @@ export default function AppLayout() {
         <Outlet />
       </main>
 
-      {/* Minimal footer */}
+      {/* Footer */}
       <footer className="border-t border-[var(--color-border)] py-4 text-center text-sm text-[var(--color-text-muted)]">
-        SKIT AI Lending Protocol — Sprint 2 · Auth &amp; Loan Module
+        SKIT AI Lending Protocol · Sprint 4 — MetaMask + On-chain Integration
       </footer>
+
+      {/* Global toast notifications — z-[200], portal to document.body */}
+      <ToastContainer />
     </div>
   );
 }
