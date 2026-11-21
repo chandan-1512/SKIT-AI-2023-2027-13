@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { WalletProvider } from './context/WalletContext';
+import { ToastProvider } from './context/ToastContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AdminRoute from './components/auth/AdminRoute';
 import AppLayout from './layouts/AppLayout';
@@ -17,9 +18,10 @@ import AdminDashboardPage from './pages/AdminDashboardPage';
 
 export default function App() {
   return (
-    <AuthProvider>
-      <WalletProvider>
-        <Routes>
+    <ToastProvider>
+      <AuthProvider>
+        <WalletProvider>
+          <Routes>
           {/* ── Public auth routes (no Navbar / protected shell) ── */}
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<LoginPage />} />
@@ -48,5 +50,6 @@ export default function App() {
         </Routes>
       </WalletProvider>
     </AuthProvider>
+    </ToastProvider>
   );
 }

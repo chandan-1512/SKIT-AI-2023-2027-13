@@ -13,11 +13,13 @@
  *   • Oracle poll timeout after ORACLE_TIMEOUT_MS → throws 'Oracle timed out'
  *
  * Sprint 4 — Task 2: Contract Integration
+ * Sprint 4 — Task 4: Toast notifications for all error/success states
  */
 
 import { useState, useCallback, useRef } from 'react';
 import { parseUnits } from 'ethers';
 import { useWallet } from '../context/WalletContext';
+import { useToast } from '../context/ToastContext';
 import { getWriteContract, getReadContract, LoanStatus, LOAN_STATUS_LABEL, classifyContractError } from '../services/contractService';
 import {
   ORACLE_STEP_REQUESTING,
@@ -53,6 +55,7 @@ const POLL_INTERVAL_MS  = 4_000;
  */
 export function useContractOracle() {
   const { isConnected, isCorrectNetwork, provider } = useWallet();
+  const { toast } = useToast();
 
   const [oracleStep, setOracleStep] = useState(-1);
   const [isRunning,  setIsRunning]  = useState(false);
@@ -82,11 +85,15 @@ export function useContractOracle() {
   const runOracle = useCallback(async (amountEth) => {
     // ── Guard: wallet preconditions ────────────────────────────────────────
     if (!isConnected) {
-      setError('Connect your wallet before submitting a loan application.');
+      const msg = 'Connect your wallet before submitting a loan application.';
+      setError(msg);
+      toast.error(msg, { title: 'Wallet Not Connected' });
       return null;
     }
     if (!isCorrectNetwork) {
-      setError('Switch to Sepolia (or local Hardhat) to interact with the contract.');
+      const msg = 'Switch to Sepolia (or local Hardhat) to interact with the contract.';
+      setError(msg);
+      toast.warning(msg, { title: 'Wrong Network' });
       return null;
     }
 
@@ -98,6 +105,7 @@ export function useContractOracle() {
     try {
       // ── Step 0: Submit tx ───────────────────────────────────────────────
       setOracleStep(ORACLE_STEP_REQUESTING);
+      toast.info('Submitting loan application to blockchain…', { title: 'Transaction', duration: 15_000 });
 
       const writeContract = await getWriteContract(provider);
 
@@ -107,6 +115,7 @@ export function useContractOracle() {
 
       const tx = await writeContract.registerLoanApplication(amountWei);
       setTxHash(tx.hash);
+      toast.info(`Transaction submitted — waiting for confirmation…`, { title: 'Mining', duration: 30_000 });
 
       // Wait for the tx to be mined (1 confirmation)
       const receipt = await tx.wait(1);
@@ -132,6 +141,10 @@ export function useContractOracle() {
 
       // ── Step 1: Wait for oracle round-trip ─────────────────────────────
       setOracleStep(ORACLE_STEP_AWAITING);
+      toast.info('Application submitted! Waiting for oracle decision (up to 90 s)…', {
+        title: 'Oracle',
+        duration: 90_000,
+      });
 
       const readContract = getReadContract(provider);
       const deadline     = Date.now() + ORACLE_TIMEOUT_MS;
@@ -161,6 +174,17 @@ export function useContractOracle() {
 
       const decision = LOAN_STATUS_LABEL[finalStatus] ?? 'Unknown';
 
+      if (finalStatus === LoanStatus.Approved) {
+        toast.success(`Oracle decision received: ${decision}! Review your loan terms.`, {
+          title: 'Approved ✓',
+        });
+      } else {
+        toast.warning(`Oracle decision received: ${decision}.`, {
+          title: 'Rejected',
+          duration: 8_000,
+        });
+      }
+
       // Short pause so the UI shows step 2 before jumping to confirm
       await new Promise((res) => setTimeout(res, 500));
 
@@ -173,13 +197,22 @@ export function useContractOracle() {
     } catch (err) {
       if (abortRef.current) return null; // ignore errors after reset
 
-      const { message } = classifyContractError(err);
+      const { message, isUserRejection, isTimeout } = classifyContractError(err);
       setError(message);
       setOracleStep(-1);
       setIsRunning(false);
+
+      if (isUserRejection) {
+        toast.warning(message, { title: 'Cancelled' });
+      } else if (isTimeout) {
+        toast.error(message, { title: 'Oracle Timeout', duration: 12_000 });
+      } else {
+        toast.error(message, { title: 'Transaction Failed', duration: 10_000 });
+      }
+
       return null;
     }
-  }, [isConnected, isCorrectNetwork, provider]);
+  }, [isConnected, isCorrectNetwork, provider, toast]);
 
   return { oracleStep, isRunning, error, txHash, runOracle, reset };
 }

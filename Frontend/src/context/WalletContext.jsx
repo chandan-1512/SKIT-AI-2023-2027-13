@@ -13,6 +13,7 @@
  *   - React to MetaMask's accountsChanged and chainChanged events
  *
  * Sprint 4 — Task 1: Wallet Integration
+ * Sprint 4 — Task 4: Emit toast notifications on connect/disconnect/network change
  */
 
 import {
@@ -24,6 +25,7 @@ import {
   useRef,
 } from 'react';
 import { BrowserProvider } from 'ethers';
+import { useToast } from './ToastContext';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -88,6 +90,8 @@ function getEthereum() {
  * @param {{ children: React.ReactNode }} props
  */
 export function WalletProvider({ children }) {
+  const { toast } = useToast();
+
   const [address, setAddress]         = useState(/** @type {string|null} */ (null));
   const [chainId, setChainId]         = useState(/** @type {number|null} */ (null));
   const [isConnecting, setConnecting] = useState(false);
@@ -142,18 +146,32 @@ export function WalletProvider({ children }) {
         setAddress(null);
         setChainId(null);
         providerRef.current = null;
+        toast.warning('Wallet disconnected.', { title: 'Wallet' });
       } else {
-        setAddress(accounts[0]);
+        const newAddr = accounts[0];
+        setAddress(newAddr);
         // Refresh the provider reference with the new account context
         providerRef.current = new BrowserProvider(eth);
+        toast.info(`Account switched to ${shortenAddress(newAddr)}`, { title: 'Wallet' });
       }
     }
 
     /** chainChanged fires when the user switches networks. */
     function handleChainChanged(hexChainId) {
-      setChainId(parseInt(hexChainId, 16));
+      const newChainId = parseInt(hexChainId, 16);
+      setChainId(newChainId);
       // Re-create the provider since it's bound to the old chain
       providerRef.current = new BrowserProvider(eth);
+
+      const name = NETWORK_NAMES[newChainId] ?? `Chain ${newChainId}`;
+      if (ALLOWED_CHAIN_IDS.has(newChainId)) {
+        toast.success(`Switched to ${name}.`, { title: 'Network' });
+      } else {
+        toast.warning(
+          `Switched to ${name}. Please switch to Sepolia to use the app.`,
+          { title: 'Wrong Network', duration: 10_000 },
+        );
+      }
     }
 
     eth.on('accountsChanged', handleAccountsChanged);
@@ -166,7 +184,7 @@ export function WalletProvider({ children }) {
       eth.removeListener('accountsChanged', handleAccountsChanged);
       eth.removeListener('chainChanged', handleChainChanged);
     };
-  }, [refreshState]);
+  }, [refreshState, toast]);
 
   // ── Public actions ──────────────────────────────────────────────────────────
 
@@ -189,22 +207,30 @@ export function WalletProvider({ children }) {
       // eth_requestAccounts triggers the MetaMask popup
       await provider.send('eth_requestAccounts', []);
       await refreshState();
+
+      // Toast is emitted by handleAccountsChanged — but if already connected
+      // (page refresh), we emit here instead.
+      toast.success('Wallet connected.', { title: 'Wallet' });
     } catch (err) {
       // 4001 = user rejected; anything else is a real error
-      if (err?.code !== 4001) {
+      if (err?.code === 4001) {
+        toast.warning('Connection cancelled.', { title: 'Wallet' });
+      } else {
         console.error('[WalletContext] connect error:', err);
+        toast.error('Failed to connect wallet. Check MetaMask and try again.', { title: 'Wallet Error' });
       }
     } finally {
       setConnecting(false);
     }
-  }, [refreshState]);
+  }, [refreshState, toast]);
 
   /** Soft-disconnect — clears app state (MetaMask itself stays connected). */
   const disconnect = useCallback(() => {
     setAddress(null);
     setChainId(null);
     providerRef.current = null;
-  }, []);
+    toast.info('Wallet disconnected from app.', { title: 'Wallet' });
+  }, [toast]);
 
   /**
    * Ask MetaMask to switch to Sepolia.
@@ -237,10 +263,15 @@ export function WalletProvider({ children }) {
           });
         } catch (addError) {
           console.error('[WalletContext] wallet_addEthereumChain error:', addError);
+          toast.error('Could not add Sepolia network to MetaMask.', { title: 'Network Error' });
         }
+      } else if (switchError?.code === 4001) {
+        toast.warning('Network switch cancelled.', { title: 'Wallet' });
+      } else {
+        toast.error('Failed to switch network. Try manually in MetaMask.', { title: 'Network Error' });
       }
     }
-  }, []);
+  }, [toast]);
 
   // ── Context value ────────────────────────────────────────────────────────────
 
@@ -279,3 +310,4 @@ export function useWallet() {
   }
   return ctx;
 }
+

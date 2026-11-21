@@ -135,3 +135,9 @@
     animation: slideUp 0.3s ease-out both;
   }
 }
+
+/* ─── Toast animation ─────────────────────────────── */
+@keyframes toast-shrink {
+  from { width: 100%; }
+  to   { width: 0%;   }
+}
